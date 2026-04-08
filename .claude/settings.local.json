@@ -5,7 +5,18 @@
       "Bash(curl -s http://localhost:5173)",
       "Bash(npm run:*)",
       "Bash(npm install:*)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(rm:*)",
+      "Bash(node -e \"const l = require\\('./package-lock.json'\\); console.log\\(Object.keys\\(l.packages\\).filter\\(k=>k.includes\\('emnapi'\\)\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(k,':',d['packages'][k].get\\('version','?'\\)\\) for k in d['packages'] if 'emnapi' in k or 'wasi' in k]\")",
+      "Bash(npm ls:*)",
+      "Bash(node -e \"const d=require\\('/dev/stdin'\\); console.log\\('deps:', d.dependencies\\); console.log\\('opt:', d.optionalDependencies\\); console.log\\('peer:', d.peerDependencies\\); console.log\\('os:', d.os\\)\")",
+      "Bash(node -e \"const d=require\\('./node_modules/@emnapi/wasi-threads/package.json'\\); console.log\\('deps:', JSON.stringify\\(d.dependencies\\)\\); console.log\\('opt:', JSON.stringify\\(d.optionalDependencies\\)\\); console.log\\('os:', d.os\\)\")",
+      "Bash(node -e \"const l=require\\('./package-lock.json'\\); Object.entries\\(l.packages\\).forEach\\(\\([k,v]\\)=>{ if\\(v.optionalDependencies && \\(v.optionalDependencies['@emnapi/core']||v.optionalDependencies['@emnapi/runtime']\\)\\) console.log\\(k, JSON.stringify\\(v.optionalDependencies\\)\\) }\\)\")",
+      "Bash(node -e \"const l=require\\('./package-lock.json'\\); Object.entries\\(l.packages\\).forEach\\(\\([k,v]\\)=>{ const allDeps={...v.dependencies,...v.optionalDependencies,...v.peerDependencies}; if\\(Object.keys\\(allDeps\\).some\\(d=>d.includes\\('emnapi'\\)\\)\\) console.log\\(k, JSON.stringify\\(allDeps\\)\\) }\\)\")",
+      "Bash(node -e \"const l=require\\('./package-lock.json'\\); Object.entries\\(l.packages\\).forEach\\(\\([k,v]\\)=>{ const allDeps={...v.dependencies,...v.optionalDependencies}; if\\(Object.keys\\(allDeps\\).some\\(d=>d.includes\\('napi-rs/wasm'\\)\\)\\) console.log\\(k\\) }\\)\")",
+      "Bash(node -e \"const l=require\\('./package-lock.json'\\); const k='node_modules/@napi-rs/wasm-runtime'; console.log\\(l.packages[k] ? JSON.stringify\\(l.packages[k], null, 2\\) : 'NOT IN LOCK FILE'\\)\")",
+      "Bash(node -e ':*)"
     ]
   },
   "hooks": {
