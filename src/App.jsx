@@ -1,3 +1,4 @@
+import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import About from './components/About';
@@ -6,8 +7,10 @@ import Projects from './components/Projects';
 import Skills from './components/Skills';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import Hub from './components/Hub';
+import UniversityModule from './components/UniversityModule';
 
-export default function App() {
+function Portfolio() {
   return (
     <>
       <Navbar />
@@ -21,5 +24,15 @@ export default function App() {
       </main>
       <Footer />
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Portfolio />} />
+      <Route path="/hub" element={<Hub />} />
+      <Route path="/hub/:moduleId" element={<UniversityModule />} />
+    </Routes>
   );
 }

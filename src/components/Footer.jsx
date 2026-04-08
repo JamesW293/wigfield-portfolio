@@ -1,4 +1,8 @@
+import { useNavigate } from 'react-router-dom';
+
 export default function Footer() {
+  const navigate = useNavigate();
+
   return (
     <footer className="footer">
       <div className="container footer__inner">
@@ -16,6 +20,16 @@ export default function Footer() {
 
         <p className="footer__sub">Made with React + ♥ in Perth, Australia</p>
       </div>
+
+      {/* Hidden hub gate — intentionally low-contrast */}
+      <button
+        className="footer__hub-gate"
+        onClick={() => navigate('/hub')}
+        aria-label="hub"
+        tabIndex={-1}
+      >
+        ·
+      </button>
     </footer>
   );
 }
