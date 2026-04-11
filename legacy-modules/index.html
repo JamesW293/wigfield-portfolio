@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CITS5508 — Interactive Machine Learning Study</title>
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\(', right: '\\)', display: false}
+      ],
+      throwOnError: false
+    });"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-title">
+        <span class="unit-badge">CITS5508</span>
+        <h1>Machine Learning — Interactive Study</h1>
+      </div>
+      <p class="header-sub">Visualise core concepts from your lecture notes. Adjust parameters and build intuition.</p>
+    </div>
+  </header>
+
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" data-target="gd" role="tab" aria-selected="true">
+      <span class="tab-icon">⬇</span> Gradient Descent
+    </button>
+    <button class="tab-btn" data-target="polyreg" role="tab">
+      <span class="tab-icon">〜</span> Polynomial Regression
+    </button>
+    <button class="tab-btn" data-target="regularization" role="tab">
+      <span class="tab-icon">⚖</span> Regularization
+    </button>
+    <button class="tab-btn" data-target="learningcurves" role="tab">
+      <span class="tab-icon">📈</span> Learning Curves
+    </button>
+    <button class="tab-btn" data-target="classification" role="tab">
+      <span class="tab-icon">◉</span> Classification
+    </button>
+    <button class="tab-btn" data-target="featurescaling" role="tab">
+      <span class="tab-icon">⇔</span> Feature Scaling
+    </button>
+    <button class="tab-btn" data-target="earlystopping" role="tab">
+      <span class="tab-icon">◻</span> Early Stopping
+    </button>
+    <button class="tab-btn" data-target="linalg" role="tab">
+      <span class="tab-icon">⊞</span> Linear Algebra
+    </button>
+    <button class="tab-btn" data-target="calculus" role="tab">
+      <span class="tab-icon">∂</span> Calculus
+    </button>
+    <button class="tab-btn" data-target="functions" role="tab">
+      <span class="tab-icon">ƒ</span> Functions
+    </button>
+    <button class="tab-btn" data-target="ridgelasso" role="tab">
+      <span class="tab-icon">◇</span> Ridge &amp; Lasso
+    </button>
+    <button class="tab-btn" data-target="knn" role="tab">
+      <span class="tab-icon">⊙</span> KNN
+    </button>
+    <button class="tab-btn" data-target="mlconcepts" role="tab">
+      <span class="tab-icon">🧠</span> ML Concepts
+    </button>
+    <button class="tab-btn" data-target="quiz" role="tab">
+      <span class="tab-icon">✎</span> Knowledge Check
+    </button>
+  </nav>
+
+  <main class="app-main">
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 1 — GRADIENT DESCENT
+    ════════════════════════════════════════════════ -->
+    <section id="module-gd" class="module active" aria-label="Gradient Descent Visualiser">
+      <div class="module-header">
+        <h2>Gradient Descent</h2>
+        <p>
+          Gradient Descent iteratively minimises a cost function by moving in the direction of the steepest descent.
+          Adjust the learning rate \(\eta\) to see how step size affects convergence on
+          \(J(\theta) = (\theta - 2)^2\).
+        </p>
+      </div>
+
+      <div class="module-body">
+        <div class="chart-panel">
+          <canvas id="gdChart"></canvas>
+          <div class="chart-status" id="gdStatus"></div>
+        </div>
+
+        <div class="theory-panel">
+          <div class="equation-block">
+            <h3>Core Equations</h3>
+            <div class="eq-card">
+              <span class="eq-label">MSE Cost Function</span>
+              $$J(\theta) = \frac{1}{2m}\sum_{i=1}^{m}\left(\hat{y}^{(i)} - y^{(i)}\right)^2$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Gradient Descent Update</span>
+              $$\theta_j \leftarrow \theta_j - \eta \frac{\partial J}{\partial \theta_j}$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Batch GD (vectorised)</span>
+              $$\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} - \frac{\eta}{m}\mathbf{X}^T(\mathbf{X}\boldsymbol{\theta} - \mathbf{y})$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Normal Equation (closed-form)</span>
+              $$\hat{\boldsymbol{\theta}} = \left(\mathbf{X}^T\mathbf{X}\right)^{-1}\mathbf{X}^T\mathbf{y}$$
+            </div>
+          </div>
+
+          <div class="controls-block">
+            <div class="control-row">
+              <label for="gdLR">
+                Learning rate &nbsp;<strong id="gdLRVal" class="param-val">0.10</strong>
+                &nbsp; \(\eta\)
+              </label>
+              <input type="range" id="gdLR" min="0.01" max="1.30" step="0.01" value="0.10" />
+              <div class="lr-hint" id="gdHint"></div>
+            </div>
+
+            <div class="control-row">
+              <label for="gdSteps">
+                Max steps &nbsp;<strong id="gdStepsVal" class="param-val">30</strong>
+              </label>
+              <input type="range" id="gdSteps" min="5" max="60" step="5" value="30" />
+            </div>
+
+            <div class="control-row">
+              <label for="gdStart">
+                Start \(\theta_0\) &nbsp;<strong id="gdStartVal" class="param-val">-3.0</strong>
+              </label>
+              <input type="range" id="gdStart" min="-5" max="6" step="0.5" value="-3" />
+            </div>
+
+            <div class="btn-row">
+              <button id="gdReset" class="btn btn-outline">Reset</button>
+              <button id="gdStep" class="btn btn-primary">Step →</button>
+              <button id="gdRun" class="btn btn-accent">▶ Run All</button>
+            </div>
+
+            <div class="info-chips" id="gdInfo">
+              <span class="chip">Step: <strong id="gdCurStep">0</strong></span>
+              <span class="chip">θ: <strong id="gdCurTheta">—</strong></span>
+              <span class="chip">J(θ): <strong id="gdCurCost">—</strong></span>
+            </div>
+          </div>
+
+          <div class="insight-box" id="gdInsight">
+            <strong>Insight:</strong> For \(J(\theta) = (\theta-2)^2\), the gradient is \(2(\theta-2)\).
+            Convergence is guaranteed when \(\eta &lt; 1\). At \(\eta = 1\) the algorithm oscillates;
+            above \(\eta = 1\) it diverges.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 2 — POLYNOMIAL REGRESSION
+    ════════════════════════════════════════════════ -->
+    <section id="module-polyreg" class="module" aria-label="Polynomial Regression Visualiser">
+      <div class="module-header">
+        <h2>Polynomial Regression</h2>
+        <p>
+          By adding polynomial features \(x^2, x^3, \ldots\) to linear regression we can model non-linear data.
+          Too few terms → <em>underfitting</em>; too many → <em>overfitting</em>.
+          Adjust the degree slider to see the effect.
+        </p>
+      </div>
+
+      <div class="module-body">
+        <div class="chart-panel">
+          <canvas id="polyChart"></canvas>
+        </div>
+
+        <div class="theory-panel">
+          <div class="equation-block">
+            <h3>Core Equations</h3>
+            <div class="eq-card">
+              <span class="eq-label">Polynomial Feature Expansion</span>
+              $$\hat{y} = \theta_0 + \theta_1 x + \theta_2 x^2 + \cdots + \theta_d x^d$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Normal Equation (closed-form fit)</span>
+              $$\boldsymbol{\theta} = (\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y}$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Training MSE</span>
+              $$\text{MSE}_\text{train} = \frac{1}{m}\sum_{i=1}^{m}\left(\hat{y}^{(i)} - y^{(i)}\right)^2$$
+            </div>
+          </div>
+
+          <div class="controls-block">
+            <div class="control-row">
+              <label for="polyDegree">
+                Polynomial degree &nbsp;<strong id="polyDegreeVal" class="param-val">1</strong>
+              </label>
+              <input type="range" id="polyDegree" min="1" max="12" step="1" value="1" />
+              <div class="fit-badge" id="polyFitBadge"></div>
+            </div>
+
+            <div class="info-chips">
+              <span class="chip">Train MSE: <strong id="polyMSE">—</strong></span>
+              <span class="chip">Degree: <strong id="polyDegreeChip">1</strong></span>
+            </div>
+
+            <div class="btn-row">
+              <button id="polyResample" class="btn btn-outline">New Data</button>
+            </div>
+          </div>
+
+          <div class="insight-box">
+            <strong>Insight:</strong> The true underlying function is \(\sin(x) + \epsilon\) (noise \(\epsilon\)).
+            A degree-1 line underfits. A degree ≈ 3–5 fits well. Higher degrees memorise the noise — overfitting.
+            The Normal Equation solves \((\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y}\) exactly.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 3 — REGULARIZATION
+    ════════════════════════════════════════════════ -->
+    <section id="module-regularization" class="module" aria-label="Regularization Visualiser">
+      <div class="module-header">
+        <h2>Regularisation: Ridge vs Lasso vs Elastic Net</h2>
+        <p>
+          Regularisation constrains model weights to reduce overfitting.
+          Increase \(\alpha\) to strengthen the penalty and watch how each method handles the coefficients differently.
+        </p>
+      </div>
+
+      <div class="module-body">
+        <div class="chart-panel">
+          <canvas id="regChart"></canvas>
+        </div>
+
+        <div class="theory-panel">
+          <div class="equation-block">
+            <h3>Cost Functions</h3>
+            <div class="eq-card">
+              <span class="eq-label">Ridge (\(\ell_2\) penalty)</span>
+              $$J(\boldsymbol{\theta}) = \text{MSE}(\boldsymbol{\theta}) + \alpha\sum_{j=1}^{n}\theta_j^2$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Lasso (\(\ell_1\) penalty)</span>
+              $$J(\boldsymbol{\theta}) = \text{MSE}(\boldsymbol{\theta}) + \alpha\sum_{j=1}^{n}|\theta_j|$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Elastic Net</span>
+              $$J(\boldsymbol{\theta}) = \text{MSE}(\boldsymbol{\theta}) + r\alpha\!\sum|\theta_j| + \tfrac{1-r}{2}\alpha\!\sum\theta_j^2$$
+            </div>
+          </div>
+
+          <div class="controls-block">
+            <div class="control-row">
+              <label>Method</label>
+              <div class="toggle-group" id="regMethodToggle">
+                <button class="toggle-btn active" data-method="ridge">Ridge</button>
+                <button class="toggle-btn" data-method="lasso">Lasso</button>
+                <button class="toggle-btn" data-method="elastic">Elastic Net</button>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <label for="regAlpha">
+                \(\alpha\) (regularisation strength) &nbsp;
+                <strong id="regAlphaVal" class="param-val">0.00</strong>
+              </label>
+              <input type="range" id="regAlpha" min="0" max="3" step="0.05" value="0" />
+            </div>
+
+            <div class="control-row" id="regMixRow" style="display:none">
+              <label for="regMix">
+                Elastic Net mix ratio \(r\) &nbsp;
+                <strong id="regMixVal" class="param-val">0.50</strong>
+              </label>
+              <input type="range" id="regMix" min="0" max="1" step="0.05" value="0.5" />
+            </div>
+
+            <div class="insight-box" id="regInsight">
+              <strong>Ridge</strong> shrinks all coefficients toward zero but keeps them non-zero.
+              <strong>Lasso</strong> applies soft-thresholding — some coefficients become <em>exactly</em> zero,
+              performing automatic feature selection.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 4 — LEARNING CURVES
+    ════════════════════════════════════════════════ -->
+    <section id="module-learningcurves" class="module" aria-label="Learning Curves Visualiser">
+      <div class="module-header">
+        <h2>Learning Curves &amp; Bias–Variance Trade-off</h2>
+        <p>
+          Learning curves plot training and validation error as a function of training set size.
+          They diagnose whether a model is underfitting (high bias) or overfitting (high variance).
+          Change the model complexity to see the effect.
+        </p>
+      </div>
+
+      <div class="module-body">
+        <div class="chart-panel">
+          <canvas id="lcChart"></canvas>
+        </div>
+
+        <div class="theory-panel">
+          <div class="equation-block">
+            <h3>Bias–Variance Decomposition</h3>
+            <div class="eq-card">
+              <span class="eq-label">Generalisation Error</span>
+              $$\text{Error} = \text{Bias}^2 + \text{Variance} + \text{Irreducible Noise}$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Underfitting (High Bias)</span>
+              $$\text{Train error} \approx \text{Val error} \gg 0$$
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Overfitting (High Variance)</span>
+              $$\text{Train error} \ll \text{Val error}$$
+            </div>
+          </div>
+
+          <div class="controls-block">
+            <div class="control-row">
+              <label for="lcDegree">
+                Model complexity (degree) &nbsp;
+                <strong id="lcDegreeVal" class="param-val">1</strong>
+              </label>
+              <input type="range" id="lcDegree" min="1" max="10" step="1" value="1" />
+              <div class="fit-badge" id="lcFitBadge"></div>
+            </div>
+
+            <div class="info-chips">
+              <span class="chip">Final Train MSE: <strong id="lcTrainMSE">—</strong></span>
+              <span class="chip">Final Val MSE: <strong id="lcValMSE">—</strong></span>
+            </div>
+
+            <div class="insight-box">
+              <strong>Low degree (1–2):</strong> Both curves plateau high — classic underfitting.
+              Adding data won't help much.<br>
+              <strong>High degree (7+):</strong> Training error is near zero but validation error is large — overfitting.
+              The gap between curves signals high variance.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE A — CLASSIFICATION (sigmoid / softmax)
+    ════════════════════════════════════════════════ -->
+    <section id="module-classification" class="module" aria-label="Classification">
+      <div class="module-header">
+        <h2>Classification: Sigmoid &amp; Softmax</h2>
+        <p>Understand supervised vs unsupervised learning, and how sigmoid (N=2) and softmax (N&gt;2) turn raw scores into predictions.</p>
+      </div>
+
+      <div class="sub-nav">
+        <button class="sub-btn active" data-sub="cls-supunsup">Supervised vs Unsupervised</button>
+        <button class="sub-btn" data-sub="cls-sigmoid">Sigmoid (Binary)</button>
+        <button class="sub-btn" data-sub="cls-softmax">Softmax (Multi-class)</button>
+      </div>
+
+      <!-- ── SUPERVISED vs UNSUPERVISED ── -->
+      <div class="sub-panel active" id="cls-supunsup">
+        <div class="module-body">
+          <div class="chart-panel">
+            <div class="sup-header-row">
+              <h3 class="panel-sub-h" id="sup-mode-label">Supervised Learning</h3>
+              <button id="sup-toggle-btn" class="btn btn-primary" style="margin-left:auto">Switch to Unsupervised</button>
+            </div>
+            <canvas id="supUnsupChart"></canvas>
+            <div class="sup-desc-box" id="sup-description"></div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Key Definitions</h3>
+              <div class="eq-card">
+                <span class="eq-label">Supervised Learning</span>
+                $$\text{Given } \{(\mathbf{x}^{(i)}, y^{(i)})\}_{i=1}^{m}, \text{ learn } f: \mathbf{x} \to y$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Unsupervised Learning</span>
+                $$\text{Given } \{\mathbf{x}^{(i)}\}_{i=1}^{m} \text{ (no labels), find structure}$$
+              </div>
+            </div>
+            <div class="insight-box">
+              <strong>Supervised examples:</strong>
+              <ul class="insight-list" style="list-style:disc;padding-left:1rem">
+                <li>Classification: spam vs not-spam</li>
+                <li>Regression: predict house price from features</li>
+                <li>Object detection: label objects in images</li>
+              </ul>
+              <strong>Unsupervised examples:</strong>
+              <ul class="insight-list" style="list-style:disc;padding-left:1rem">
+                <li>Clustering: group customers by behaviour</li>
+                <li>Dimensionality reduction: PCA, t-SNE</li>
+                <li>Anomaly detection: find unusual patterns</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SIGMOID ── -->
+      <div class="sub-panel" id="cls-sigmoid">
+        <div class="module-body">
+          <div class="chart-panel">
+            <canvas id="sigmoidChart"></canvas>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Sigmoid — N = 2 Classes</h3>
+              <div class="eq-card">
+                <span class="eq-label">Sigmoid function</span>
+                $$\sigma(z) = \frac{1}{1 + e^{-z}}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Logit from model</span>
+                $$z = \mathbf{w}^T\mathbf{x} + b$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Decision rule</span>
+                $$\hat{y} = \begin{cases}1 & \text{if } \sigma(z) \geq 0.5 \\ 0 & \text{otherwise}\end{cases}$$
+              </div>
+            </div>
+
+            <div class="controls-block">
+              <div class="control-row">
+                <label>Logit z = <strong id="sigmoid-z-val" class="param-val">0.00</strong></label>
+                <input type="range" id="sigmoid-z" min="-7" max="7" step="0.05" value="0" />
+              </div>
+              <div class="result-display" id="sigmoid-formula-live"></div>
+              <div class="result-display">σ(z) = <strong id="sigmoid-out"></strong></div>
+              <div class="result-display" id="sigmoid-decision" style="font-weight:700"></div>
+            </div>
+
+            <div class="insight-box">
+              <strong>Why sigmoid for N=2?</strong> It maps any real logit to (0,1),
+              which we interpret as P(class=1). The threshold at σ(z)=0.5 is equivalent
+              to z=0, i.e. the decision boundary where w<sup>T</sup>x + b = 0.
+              At z→+∞, σ→1 (certain positive); at z→−∞, σ→0 (certain negative).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SOFTMAX ── -->
+      <div class="sub-panel" id="cls-softmax">
+        <div class="module-body">
+          <div class="chart-panel">
+            <canvas id="softmaxChart"></canvas>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Softmax — N &gt; 2 Classes</h3>
+              <div class="eq-card">
+                <span class="eq-label">Softmax function</span>
+                $$\text{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\displaystyle\sum_{j=1}^{K} e^{z_j}}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Key property</span>
+                $$\sum_{k=1}^{K} \text{softmax}(\mathbf{z})_k = 1$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Decision</span>
+                $$\hat{y} = \arg\max_k\; \text{softmax}(\mathbf{z})_k$$
+              </div>
+            </div>
+
+            <div class="controls-block">
+              <div class="control-row">
+                <label>Number of classes K</label>
+                <select id="softmax-n" class="dim-select" style="width:100%;margin-top:0.3rem">
+                  <option value="2">2</option>
+                  <option value="3" selected>3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
+              <div id="softmax-sliders"></div>
+              <div class="result-display" id="sm-sum-check" style="color:var(--green)"></div>
+              <div class="result-display" id="sm-prediction" style="font-weight:700"></div>
+            </div>
+
+            <div class="insight-box">
+              <strong>Why softmax for N&gt;2?</strong> We need K outputs that are (1) all positive
+              and (2) sum to 1. Exponentiation ensures positivity; dividing by the sum normalises.
+              Notice: if K=2, softmax reduces to sigmoid for class 1.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE B — FEATURE SCALING
+    ════════════════════════════════════════════════ -->
+    <section id="module-featurescaling" class="module" aria-label="Feature Scaling">
+      <div class="module-header">
+        <h2>Feature Scaling</h2>
+        <p>See how standardisation and min-max scaling transform features, and why unscaled features cause gradient descent to converge slowly.</p>
+      </div>
+
+      <div class="sub-nav">
+        <button class="sub-btn active" data-sub="fs-methods">Scaling Methods</button>
+        <button class="sub-btn" data-sub="fs-gdcompare">GD Convergence</button>
+      </div>
+
+      <!-- ── SCALING METHODS ── -->
+      <div class="sub-panel active" id="fs-methods">
+        <div class="module-body">
+          <div class="chart-panel">
+            <canvas id="scalingChart"></canvas>
+            <div class="fs-formula-box" id="fs-formula"></div>
+            <div class="result-display" id="fs-result-stats"></div>
+
+            <h3 class="panel-sub-h" style="margin-top:1rem">Transformation table</h3>
+            <div class="fs-table-wrap">
+              <table class="fs-table">
+                <thead><tr><th>Point</th><th>Original x</th><th>Scaled x'</th></tr></thead>
+                <tbody id="fs-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Scaling Formulas</h3>
+              <div class="eq-card">
+                <span class="eq-label">Standardisation (Z-score)</span>
+                $$x' = \frac{x - \mu}{\sigma}$$
+                <small style="color:var(--text-muted)">Result: mean=0, std=1</small>
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Min-Max Normalisation</span>
+                $$x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}$$
+                <small style="color:var(--text-muted)">Result: range [0, 1]</small>
+              </div>
+            </div>
+
+            <div class="controls-block">
+              <div class="control-row">
+                <label>Feature dataset</label>
+                <select id="fs-feat" class="dim-select" style="width:100%;margin-top:0.3rem">
+                  <option value="f1">House sizes (large scale: 92–800)</option>
+                  <option value="f2">Quality scores (small scale: 0.18–0.93)</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <label>Scaling method</label>
+                <select id="fs-method" class="dim-select" style="width:100%;margin-top:0.3rem">
+                  <option value="none">No scaling (original)</option>
+                  <option value="std" selected>Standardisation</option>
+                  <option value="minmax">Min-Max</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="insight-box">
+              <strong>When does scaling matter?</strong> Any algorithm that uses distances or gradient descent
+              is sensitive to feature scale: <em>k-NN, SVM, gradient descent, neural networks</em>.
+              The Normal Equation is scale-invariant (but scaling still helps numerically).
+              Decision trees are scale-invariant.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GD CONVERGENCE ── -->
+      <div class="sub-panel" id="fs-gdcompare">
+        <div class="module-body">
+          <div class="chart-panel">
+            <div class="gd-canvas-row">
+              <div class="gd-canvas-block">
+                <canvas id="gd-unscaled-canvas" width="300" height="220" class="gd-canvas"></canvas>
+              </div>
+              <div class="gd-canvas-block">
+                <canvas id="gd-scaled-canvas" width="300" height="220" class="gd-canvas"></canvas>
+              </div>
+            </div>
+            <div class="controls-block" style="margin-top:1rem">
+              <div class="control-row">
+                <label>Learning rate η = <strong id="gd-lr-val" class="param-val">0.010</strong></label>
+                <input type="range" id="gd-lr-slider" min="0.001" max="0.02" step="0.001" value="0.010" />
+              </div>
+            </div>
+            <div class="insight-box" style="margin-top:0.75rem">
+              <strong>Left:</strong> Unscaled — one feature varies 0–1000, the other 0–1.
+              The loss surface is a very stretched ellipse; GD makes tiny steps in the flat direction
+              while overshooting in the steep direction.<br>
+              <strong>Right:</strong> After scaling — both features standardised. Circular contours
+              let GD converge in far fewer steps on a straight path.
+            </div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Why Shape Matters</h3>
+              <div class="eq-card">
+                <span class="eq-label">Unscaled loss contour</span>
+                $$J \propto \theta_1^2 + (50\,\theta_2)^2 \quad \text{(elongated)}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">After standardisation</span>
+                $$J \propto \theta_1^2 + \theta_2^2 \quad \text{(circular)}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">GD update rule</span>
+                $$\boldsymbol{\theta} \leftarrow \boldsymbol{\theta} - \eta\,\nabla_{\boldsymbol{\theta}} J$$
+              </div>
+            </div>
+            <div class="insight-box">
+              With circular contours, the negative gradient always points toward the minimum.
+              With elongated contours, the gradient points mostly across the narrow direction —
+              causing the characteristic <em>zigzag</em> pattern and slow convergence.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE C — EARLY STOPPING
+    ════════════════════════════════════════════════ -->
+    <section id="module-earlystopping" class="module" aria-label="Early Stopping">
+      <div class="module-header">
+        <h2>Early Stopping</h2>
+        <p>Animate the patience-based early stopping algorithm — the same pattern as the mid-semester code snippet with SGDRegressor.</p>
+      </div>
+
+      <div class="module-body">
+        <div class="chart-panel">
+          <canvas id="esChart"></canvas>
+          <div class="es-status-box" id="es-status">Press Step or Auto to begin.</div>
+        </div>
+
+        <div class="theory-panel">
+          <div class="equation-block">
+            <h3>The Algorithm</h3>
+            <div class="eq-card">
+              <span class="eq-label">Each epoch</span>
+              <pre class="code-block">if val_error &lt; best_valid:
+    best_valid = val_error
+    save model     # ← best checkpoint
+    curr = 0       # ← reset patience
+else:
+    curr += 1
+    if curr &gt;= patience:
+        break      # ← early stop</pre>
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Why partial_fit not fit?</span>
+              <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.7;margin-top:0.3rem">
+                <code>fit()</code> <strong>resets</strong> model weights before training.<br>
+                <code>partial_fit()</code> trains for <strong>one additional epoch</strong> without resetting,
+                so we can resume from the current state each iteration of the loop.
+              </div>
+            </div>
+          </div>
+
+          <div class="controls-block">
+            <div class="control-row">
+              <label>Patience (epochs without improvement before stopping)</label>
+              <select id="es-patience" class="dim-select" style="width:100%;margin-top:0.3rem">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+
+            <div class="es-chips-grid">
+              <div class="es-chip">Epoch <strong id="es-curr-epoch">0</strong></div>
+              <div class="es-chip">Patience counter <strong id="es-patience-counter">0 / 10</strong></div>
+              <div class="es-chip">Best val RMSE <strong id="es-best-rmse">—</strong></div>
+              <div class="es-chip">Best epoch <strong id="es-best-epoch">—</strong></div>
+            </div>
+
+            <div class="btn-row">
+              <button id="es-btn-reset" class="btn btn-outline">↺ Reset</button>
+              <button id="es-btn-step" class="btn btn-primary">Step →</button>
+              <button id="es-btn-auto" class="btn btn-accent">▶ Auto</button>
+            </div>
+          </div>
+
+          <div class="insight-box">
+            <strong>Key insight:</strong> The saved best model (green dot) is from the epoch
+            with lowest validation RMSE — which is <em>before</em> overfitting sets in.
+            Even if training RMSE keeps falling, validation RMSE starts rising once the model
+            memorises training noise. Early stopping restores the saved checkpoint and discards
+            the overfitted tail.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 6 — LINEAR ALGEBRA
+    ════════════════════════════════════════════════ -->
+    <section id="module-linalg" class="module" aria-label="Linear Algebra">
+      <div class="module-header">
+        <h2>Linear Algebra</h2>
+        <p>Vectors and matrices — the language of machine learning. Practice operations interactively, with step-by-step highlighting.</p>
+      </div>
+
+      <div class="sub-nav">
+        <button class="sub-btn active" data-sub="la-vectors">Vectors</button>
+        <button class="sub-btn" data-sub="la-matmul">Matrix Multiply</button>
+        <button class="sub-btn" data-sub="la-transpose">Transpose</button>
+        <button class="sub-btn" data-sub="la-detinv">Det &amp; Inverse</button>
+      </div>
+
+      <!-- ── VECTORS ── -->
+      <div class="sub-panel active" id="la-vectors">
+        <div class="module-body">
+          <div class="chart-panel">
+            <h3 class="panel-sub-h">Edit Vectors (3D)</h3>
+            <div class="vec-editor">
+              <div class="vec-input-col">
+                <div class="vec-col-label">u</div>
+                <input type="number" id="va1" value="3" class="mat-cell-input" />
+                <input type="number" id="va2" value="5" class="mat-cell-input" />
+                <input type="number" id="va3" value="3" class="mat-cell-input" />
+              </div>
+              <div class="vec-plus">+</div>
+              <div class="vec-input-col">
+                <div class="vec-col-label">v</div>
+                <input type="number" id="vb1" value="4" class="mat-cell-input" />
+                <input type="number" id="vb2" value="7" class="mat-cell-input" />
+                <input type="number" id="vb3" value="1" class="mat-cell-input" />
+              </div>
+            </div>
+
+            <h3 class="panel-sub-h" style="margin-top:1.25rem">Vector Addition</h3>
+            <div class="vec-addition-row">
+              <div class="vec-box" id="vec-u-display"></div>
+              <div class="vec-op">+</div>
+              <div class="vec-box" id="vec-v-display"></div>
+              <div class="vec-op">=</div>
+              <div class="vec-box vec-box-result" id="vec-sum-display"></div>
+            </div>
+
+            <h3 class="panel-sub-h" style="margin-top:1.25rem">Computed Values</h3>
+            <div class="vec-results-block">
+              <div class="result-display" id="dot-expansion"></div>
+              <div class="result-display" id="norm-u"></div>
+              <div class="result-display" id="norm-v"></div>
+              <div class="result-display" id="vec-angle"></div>
+            </div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Core Equations</h3>
+              <div class="eq-card">
+                <span class="eq-label">Vector Addition</span>
+                $$\mathbf{u} + \mathbf{v} = \begin{bmatrix}u_1+v_1\\u_2+v_2\\u_3+v_3\end{bmatrix}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Dot Product</span>
+                $$\mathbf{u} \cdot \mathbf{v} = \sum_{i=1}^{n} u_i v_i = \|\mathbf{u}\|\|\mathbf{v}\|\cos\theta$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">L₂ Norm</span>
+                $$\|\mathbf{v}\|_2 = \sqrt{\sum_{i=1}^{n} v_i^2}$$
+              </div>
+            </div>
+            <div class="insight-box">
+              <strong>Insight:</strong> Dot product = 0 means vectors are perpendicular (orthogonal).
+              The L₂ norm is the Euclidean length. In ML, predictions are computed as
+              \(\hat{y} = \boldsymbol{\theta}^T \mathbf{x}\) — a dot product.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MATRIX MULTIPLY ── -->
+      <div class="sub-panel" id="la-matmul">
+        <div class="module-body">
+          <div class="chart-panel">
+            <div class="mm-dim-row">
+              <label>A rows: <select id="mm-rA" class="dim-select"><option>2</option><option selected>3</option></select></label>
+              <label>A cols / B rows: <select id="mm-cA" class="dim-select"><option>2</option><option selected>3</option></select></label>
+              <label>B cols: <select id="mm-cB" class="dim-select"><option selected>2</option><option>3</option></select></label>
+            </div>
+
+            <div class="mm-input-row">
+              <div>
+                <div class="mat-label">Edit A</div>
+                <div id="mm-input-A"></div>
+              </div>
+              <div>
+                <div class="mat-label">Edit B</div>
+                <div id="mm-input-B"></div>
+              </div>
+            </div>
+
+            <div class="mm-display-row">
+              <div class="mm-display-block">
+                <div class="mat-label">A</div>
+                <div id="mm-display-A"></div>
+              </div>
+              <div class="mm-op-sign">×</div>
+              <div class="mm-display-block">
+                <div class="mat-label">B</div>
+                <div id="mm-display-B"></div>
+              </div>
+              <div class="mm-op-sign">=</div>
+              <div class="mm-display-block">
+                <div class="mat-label">C = A × B</div>
+                <div id="mm-display-C"></div>
+              </div>
+            </div>
+
+            <div class="mm-expansion-box" id="mm-expansion">Click <strong>Next Step →</strong> to begin.</div>
+
+            <div class="btn-row" style="margin-top:0.75rem">
+              <button id="mm-btn-reset" class="btn btn-outline">↺ Reset</button>
+              <button id="mm-btn-step" class="btn btn-primary">Next Step →</button>
+              <button id="mm-btn-auto" class="btn btn-accent">▶ Auto Play</button>
+            </div>
+            <div class="chip" id="mm-step-info" style="margin-top:0.5rem">Step 0 / ?</div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Matrix Multiplication</h3>
+              <div class="eq-card">
+                <span class="eq-label">Element formula</span>
+                $$C_{ij} = \sum_{k=1}^{p} A_{ik} B_{kj}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Dimensions</span>
+                $$A \in \mathbb{R}^{n \times p},\; B \in \mathbb{R}^{p \times q} \;\Rightarrow\; C \in \mathbb{R}^{n \times q}$$
+              </div>
+            </div>
+            <div class="insight-box">
+              <strong>Reading the highlights:</strong>
+              <ul class="insight-list">
+                <li><span class="hl-legend hl-legend-row">Blue</span> = row of A being used</li>
+                <li><span class="hl-legend hl-legend-col">Orange</span> = column of B being used</li>
+                <li><span class="hl-legend hl-legend-active">Green</span> = result cell being filled</li>
+                <li><span class="hl-legend hl-legend-done">Grey</span> = already computed</li>
+              </ul>
+              C[i][j] = dot product of row <em>i</em> of A with column <em>j</em> of B.
+              A's column count must equal B's row count.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TRANSPOSE ── -->
+      <div class="sub-panel" id="la-transpose">
+        <div class="module-body">
+          <div class="chart-panel">
+            <div class="tp-dim-row">
+              <label>Rows: <select id="tp-rows" class="dim-select"><option>2</option><option selected>3</option></select></label>
+              <label>Cols: <select id="tp-cols" class="dim-select"><option>2</option><option selected>3</option></select></label>
+            </div>
+            <h3 class="panel-sub-h">Edit Matrix A</h3>
+            <div id="tp-input-grid"></div>
+
+            <div class="tp-display-row">
+              <div class="tp-display-block" id="tp-display-original"></div>
+              <div class="tp-arrow">
+                <div class="tp-arrow-icon">→</div>
+                <div class="tp-arrow-label">Transpose</div>
+                <div class="tp-arrow-note">A[i][j] → Aᵀ[j][i]</div>
+              </div>
+              <div class="tp-display-block" id="tp-display-transposed"></div>
+            </div>
+            <div class="insight-box" style="margin-top:1rem">
+              <strong>Hover</strong> over any cell to see its corresponding position in the transpose highlighted.
+            </div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Transpose</h3>
+              <div class="eq-card">
+                <span class="eq-label">Definition</span>
+                $$\left(A^T\right)_{ij} = A_{ji}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Double transpose</span>
+                $$\left(A^T\right)^T = A$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Product transpose</span>
+                $$(AB)^T = B^T A^T$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">In ML — Normal Equation</span>
+                $$\hat{\boldsymbol{\theta}} = (X^TX)^{-1}X^T\mathbf{y}$$
+              </div>
+            </div>
+            <div class="insight-box">
+              Rows become columns, columns become rows.
+              A \((n \times m)\) matrix transposes to \((m \times n)\).
+              Dot product: \(\mathbf{u} \cdot \mathbf{v} = \mathbf{u}^T\mathbf{v}\).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DET & INVERSE ── -->
+      <div class="sub-panel" id="la-detinv">
+        <div class="module-body">
+          <div class="chart-panel">
+            <h3 class="panel-sub-h">2 × 2 Matrix A — edit values</h3>
+            <div class="di-grid">
+              <div class="di-bracket-left">[</div>
+              <div class="di-cells">
+                <div class="di-row">
+                  <input type="number" id="di-a" value="1" class="mat-cell-input di-input" title="a"/>
+                  <input type="number" id="di-b" value="2" class="mat-cell-input di-input" title="b"/>
+                </div>
+                <div class="di-row">
+                  <input type="number" id="di-c" value="2" class="mat-cell-input di-input" title="c"/>
+                  <input type="number" id="di-d" value="5" class="mat-cell-input di-input" title="d"/>
+                </div>
+              </div>
+              <div class="di-bracket-right">]</div>
+            </div>
+
+            <div class="di-results">
+              <h3 class="panel-sub-h">Determinant</h3>
+              <div class="result-display" id="di-det-steps"></div>
+
+              <h3 class="panel-sub-h" style="margin-top:1rem">Inverse A⁻¹</h3>
+              <div class="result-display" id="di-inv-display"></div>
+
+              <h3 class="panel-sub-h" style="margin-top:1rem">Verification: A × A⁻¹</h3>
+              <div class="result-display" id="di-verify"></div>
+            </div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Determinant &amp; Inverse</h3>
+              <div class="eq-card">
+                <span class="eq-label">2×2 Determinant</span>
+                $$\det\begin{pmatrix}a & b\\c & d\end{pmatrix} = ad - bc$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">2×2 Inverse formula</span>
+                $$A^{-1} = \frac{1}{ad-bc}\begin{pmatrix}d & -b\\-c & a\end{pmatrix}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Verification</span>
+                $$A^{-1}A = AA^{-1} = I$$
+              </div>
+            </div>
+            <div class="insight-box">
+              <strong>Singular matrices</strong> (det = 0) have no inverse.
+              In the Normal Equation \(\hat{\boldsymbol{\theta}} = (X^TX)^{-1}X^T\mathbf{y}\),
+              if features are linearly dependent \(X^TX\) becomes singular — Ridge regularisation
+              adds \(\alpha I\) to fix this.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 7 — CALCULUS
+    ════════════════════════════════════════════════ -->
+    <section id="module-calculus" class="module" aria-label="Calculus">
+      <div class="module-header">
+        <h2>Calculus</h2>
+        <p>Derivatives, differentiation rules, and partial derivatives — the tools behind gradient descent and the Normal Equation.</p>
+      </div>
+
+      <div class="sub-nav">
+        <button class="sub-btn active" data-sub="calc-deriv">Derivative (h→0)</button>
+        <button class="sub-btn" data-sub="calc-rules">Diff Rules</button>
+        <button class="sub-btn" data-sub="calc-partial">Partial Derivatives</button>
+      </div>
+
+      <!-- ── DERIVATIVE VISUALISER ── -->
+      <div class="sub-panel active" id="calc-deriv">
+        <div class="module-body">
+          <div class="chart-panel">
+            <canvas id="calcDerivChart"></canvas>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Derivative Definition</h3>
+              <div class="eq-card">
+                <span class="eq-label">Limit definition</span>
+                $$f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Geometric meaning</span>
+                $$\text{slope of tangent line at } x = a$$
+              </div>
+            </div>
+
+            <div class="controls-block">
+              <div class="control-row">
+                <label>Function</label>
+                <select id="calc-fn-select" class="dim-select" style="width:100%;margin-top:0.25rem">
+                  <option value="x2">f(x) = x²</option>
+                  <option value="x3">f(x) = x³</option>
+                  <option value="sinx">f(x) = sin(x)</option>
+                  <option value="expx">f(x) = eˣ</option>
+                  <option value="lnx">f(x) = ln(x)</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <label>Point a = <strong id="calc-point-a-val" class="param-val">1.00</strong></label>
+                <input type="range" id="calc-point-a" min="-3" max="3" step="0.05" value="1" />
+              </div>
+              <div class="control-row">
+                <label>Step h = <strong id="calc-h-val" class="param-val">1.0000</strong></label>
+                <input type="range" id="calc-h" min="0.0001" max="2" step="0.0001" value="1" />
+              </div>
+              <div class="btn-row">
+                <button id="calc-shrink-h" class="btn btn-primary">h ÷ 10</button>
+                <button id="calc-reset-h" class="btn btn-outline">Reset h</button>
+              </div>
+              <div class="result-display" id="calc-secant-info"></div>
+              <div class="result-display" id="calc-tangent-info"></div>
+              <div class="result-display" id="calc-error" style="color:var(--green)"></div>
+            </div>
+
+            <div class="insight-box">
+              <strong>Try this:</strong> Start with h = 1 (secant line, yellow dashes), then click
+              <em>h ÷ 10</em> repeatedly. Watch the secant approach the tangent (green line) and see
+              the error shrink toward zero. This is the limit definition of the derivative.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DIFFERENTIATION RULES ── -->
+      <div class="sub-panel" id="calc-rules">
+        <div class="module-body">
+          <div class="chart-panel">
+            <h3 class="panel-sub-h">Select a Rule</h3>
+            <div class="toggle-group" style="flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem">
+              <button class="rule-btn toggle-btn" data-rule="power">Power</button>
+              <button class="rule-btn toggle-btn" data-rule="product">Product</button>
+              <button class="rule-btn toggle-btn" data-rule="chain">Chain</button>
+              <button class="rule-btn toggle-btn" data-rule="quotient">Quotient</button>
+              <button class="rule-btn toggle-btn" data-rule="common">Common Derivatives</button>
+            </div>
+            <div id="rule-display"></div>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>All Rules Summary</h3>
+              <div class="eq-card">
+                <span class="eq-label">Sum / Difference</span>
+                $$(f \pm g)' = f' \pm g'$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Constant multiple</span>
+                $$(cf)' = cf'$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Power</span>
+                $$(x^n)' = nx^{n-1}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Product</span>
+                $$(fg)' = f'g + fg'$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Chain</span>
+                $$[f(g(x))]' = f'(g(x)) \cdot g'(x)$$
+              </div>
+            </div>
+            <div class="insight-box">
+              <strong>In ML:</strong> The gradient of the RSS cost function uses the chain rule:
+              $$\frac{\partial \text{RSS}}{\partial \boldsymbol{\theta}} = -2X^T(\mathbf{y} - X\boldsymbol{\theta})$$
+              This is derived by applying the chain rule to \(\|\mathbf{y} - X\boldsymbol{\theta}\|^2\).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PARTIAL DERIVATIVES ── -->
+      <div class="sub-panel" id="calc-partial">
+        <div class="module-body">
+          <div class="chart-panel">
+            <canvas id="partialChart"></canvas>
+          </div>
+
+          <div class="theory-panel">
+            <div class="equation-block">
+              <h3>Partial Derivatives</h3>
+              <div class="eq-card">
+                <span class="eq-label">Definition</span>
+                $$\frac{\partial f}{\partial x} = \lim_{h\to 0}\frac{f(x+h,y)-f(x,y)}{h}$$
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Gradient vector</span>
+                $$\nabla_{\mathbf{x}} f = \begin{bmatrix}\partial f/\partial x_1 \\ \partial f/\partial x_2\end{bmatrix}$$
+              </div>
+            </div>
+
+            <div class="controls-block">
+              <div class="control-row">
+                <label>Function</label>
+                <select id="partial-fn" class="dim-select" style="width:100%;margin-top:0.25rem">
+                  <option value="linear">f(x,y) = 2x + 4y + 3</option>
+                  <option value="quadratic">f(x,y) = x² + xy + y²</option>
+                  <option value="sincos">f(x,y) = x²·sin(4y)</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <label>x₀ = <strong id="partial-x-val" class="param-val">1.00</strong></label>
+                <input type="range" id="partial-x" min="-2.5" max="2.5" step="0.05" value="1" />
+              </div>
+              <div class="control-row">
+                <label>y₀ = <strong id="partial-y-val" class="param-val">1.00</strong></label>
+                <input type="range" id="partial-y" min="-2.5" max="2.5" step="0.05" value="1" />
+              </div>
+
+              <div class="partial-formulas" id="partial-tex"></div>
+              <div class="partial-vals" id="partial-vals"></div>
+              <div class="result-display" id="partial-note" style="font-style:italic"></div>
+            </div>
+
+            <div class="insight-box">
+              <strong>Key idea:</strong> A partial derivative ∂f/∂x treats y as a constant — it measures
+              the slope in only the x-direction. The gradient ∇f points in the direction of steepest ascent.
+              Gradient descent moves in the <em>opposite</em> direction.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 8 — FUNCTIONS
+    ════════════════════════════════════════════════ -->
+    <section id="module-functions" class="module" aria-label="Functions Explorer">
+      <div class="module-header">
+        <h2>Functions Explorer</h2>
+        <p>Explore the function types covered in PDF 1 — domain, range, behaviour, and their role in machine learning.</p>
+      </div>
+
+      <div class="module-body">
+        <div class="chart-panel">
+          <canvas id="fnChart"></canvas>
+        </div>
+
+        <div class="theory-panel">
+          <div class="equation-block">
+            <h3>Function Definition</h3>
+            <div class="eq-card">
+              <span class="eq-label">A function maps inputs → outputs</span>
+              $$f: X \to Y,\quad \text{one output per input}$$
+            </div>
+            <div class="fn-formula-wrap" id="fn-formula-display-wrap">
+              <div class="fn-formula-display" id="fn-formula-display"></div>
+              <div class="fn-domain-display" id="fn-domain-display"></div>
+            </div>
+          </div>
+
+          <div class="controls-block">
+            <div class="control-row">
+              <label>Function type</label>
+              <select id="fn-type-select" class="dim-select" style="width:100%;margin-top:0.25rem">
+                <option value="linear">Linear: f(x) = ax + b</option>
+                <option value="quadratic">Quadratic: f(x) = ax² + bx + c</option>
+                <option value="exponential">Exponential: f(x) = bˣ</option>
+                <option value="logarithm">Logarithm: f(x) = log_b(x)</option>
+                <option value="sigmoid">Sigmoid: σ(x) = 1/(1+e⁻ˣ)</option>
+                <option value="absolute">Absolute value: f(x) = |x|</option>
+                <option value="squareroot">Square root: f(x) = √x</option>
+              </select>
+            </div>
+
+            <div id="fn-param-controls"></div>
+          </div>
+
+          <div class="insight-box" id="fn-insight-text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE 5 — QUIZ
+    ════════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════
+         MODULE — RIDGE & LASSO GEOMETRY
+    ════════════════════════════════════════════════ -->
+    <section id="module-ridgelasso" class="module" aria-label="Ridge and Lasso Regularisation Geometry">
+      <div class="module-header">
+        <h2>Ridge &amp; Lasso Regularisation — Geometry</h2>
+        <p>
+          Visualise <em>why</em> Ridge (ℓ₂) shrinks weights toward zero but rarely eliminates them,
+          while Lasso (ℓ₁) tends to produce <strong>sparse solutions</strong> by hitting the corners of its diamond constraint region.
+        </p>
+      </div>
+
+      <nav class="sub-nav" aria-label="Ridge/Lasso sub-navigation">
+        <button class="sub-btn active" data-panel="rl-panel-geometry">Constraint Geometry</button>
+        <button class="sub-btn" data-panel="rl-panel-theory">Theory &amp; Equations</button>
+      </nav>
+
+      <div id="rl-panel-geometry" class="sub-panel active">
+        <div class="module-body">
+          <div class="chart-panel">
+            <canvas id="rlChart"></canvas>
+          </div>
+          <div class="theory-panel">
+            <div class="controls-block">
+              <div class="control-row">
+                <label for="rl-type">Regularisation type</label>
+                <select id="rl-type" class="select-input">
+                  <option value="ridge">Ridge (ℓ₂)</option>
+                  <option value="lasso">Lasso (ℓ₁)</option>
+                </select>
+              </div>
+              <div class="control-row">
+                <label for="rl-alpha">
+                  α (strength) &nbsp;<strong id="rl-alpha-val" class="param-val">0.50</strong>
+                </label>
+                <input type="range" id="rl-alpha" min="0.05" max="0.95" step="0.05" value="0.50" />
+              </div>
+            </div>
+            <div class="insight-box" id="rl-insight" style="margin-top:1rem">
+            </div>
+            <div class="equation-block" style="margin-top:1.2rem">
+              <h3>What you're seeing</h3>
+              <div class="eq-card">
+                <span class="eq-label">Blue ellipses</span>
+                MSE loss contours — ellipses centred at the OLS (unconstrained) optimum ★
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Coloured region</span>
+                Constraint region: circle (Ridge) or diamond (Lasso). The regularised solution must lie inside.
+              </div>
+              <div class="eq-card">
+                <span class="eq-label">Coloured dot</span>
+                Regularised optimum — where the smallest possible loss ellipse first touches the constraint region.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="rl-panel-theory" class="sub-panel">
+        <div class="module-body" style="display:block;max-width:720px;margin:0 auto">
+          <div class="equation-block">
+            <h3>Regularisation Cost Functions</h3>
+            <div class="eq-card">
+              <span class="eq-label">Ridge Regression (ℓ₂)</span>
+              $$J(\boldsymbol{w}) = \text{MSE}(\boldsymbol{w}) + \alpha \sum_{j=1}^{n} w_j^2$$
+              <p style="color:#9ca3af;font-size:0.85rem;margin-top:0.4rem">
+                Penalises the <strong>sum of squared weights</strong>. Equivalent to constraining \(\|\boldsymbol{w}\|_2^2 \leq t\).
+                Geometric constraint region: a <em>ball</em> (circle in 2D).
+              </p>
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Lasso Regression (ℓ₁)</span>
+              $$J(\boldsymbol{w}) = \text{MSE}(\boldsymbol{w}) + \alpha \sum_{j=1}^{n} |w_j|$$
+              <p style="color:#9ca3af;font-size:0.85rem;margin-top:0.4rem">
+                Penalises the <strong>sum of absolute weights</strong>. Equivalent to constraining \(\|\boldsymbol{w}\|_1 \leq t\).
+                Geometric constraint region: an ℓ₁ <em>ball</em> (diamond in 2D).
+              </p>
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Elastic Net (combined)</span>
+              $$J(\boldsymbol{w}) = \text{MSE}(\boldsymbol{w}) + r\alpha\sum|w_j| + \frac{1-r}{2}\alpha\sum w_j^2$$
+              <p style="color:#9ca3af;font-size:0.85rem;margin-top:0.4rem">
+                Mix ratio \(r\) between Ridge and Lasso. Best of both worlds — sparse <em>and</em> stable.
+              </p>
+            </div>
+          </div>
+          <div class="insight-box" style="margin-top:1.2rem">
+            <strong>Why Lasso sets weights to zero:</strong> The ℓ₁ diamond has sharp <em>corners on the axes</em>.
+            The MSE loss ellipses (which are smooth) tend to first touch the diamond at a corner —
+            a point where one weight is exactly zero. The ℓ₂ circle is smooth everywhere,
+            so the tangent point is almost never at an axis, and weights are merely shrunk toward zero.
+          </div>
+          <div class="insight-box" style="margin-top:0.8rem">
+            <strong>Closed-form solutions:</strong> Ridge has an exact solution
+            \(\hat{\boldsymbol{\theta}} = \left(\mathbf{X}^T\mathbf{X} + \alpha\mathbf{I}\right)^{-1}\mathbf{X}^T\mathbf{y}\).
+            Lasso does not — it requires an iterative algorithm (coordinate descent / sub-gradient methods)
+            because the ℓ₁ penalty is not differentiable at zero.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE — K-NEAREST NEIGHBOURS
+    ════════════════════════════════════════════════ -->
+    <section id="module-knn" class="module" aria-label="K-Nearest Neighbours">
+      <div class="module-header">
+        <h2>K-Nearest Neighbours (KNN)</h2>
+        <p>
+          KNN is an <em>instance-based</em> classifier — it memorises training data and classifies
+          a query point by majority vote among its <strong>k</strong> nearest neighbours.
+          Click anywhere on the canvas to place a query point.
+        </p>
+      </div>
+
+      <div class="module-body">
+        <div class="chart-panel" style="padding:0">
+          <canvas id="knnCanvas" style="cursor:crosshair;width:100%;height:auto;display:block;border-radius:8px"></canvas>
+        </div>
+
+        <div class="theory-panel">
+          <div class="controls-block">
+            <div class="control-row">
+              <label for="knn-k">
+                k (neighbours) &nbsp;<strong id="knn-k-val" class="param-val">3</strong>
+              </label>
+              <input type="range" id="knn-k" min="1" max="15" step="2" value="3" />
+            </div>
+            <div class="control-row">
+              <label for="knn-metric">Distance metric</label>
+              <select id="knn-metric" class="select-input">
+                <option value="euclidean">Euclidean (ℓ₂)</option>
+                <option value="manhattan">Manhattan (ℓ₁)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="knn-result-panel" class="knn-result-panel">
+            <p class="muted-hint">Click the canvas to place a query point.</p>
+          </div>
+
+          <div class="equation-block" style="margin-top:1rem">
+            <h3>Key Equations</h3>
+            <div class="eq-card">
+              <span class="eq-label">Minkowski Distance (generalised)</span>
+              $$d_p(\mathbf{x},\mathbf{z}) = \left(\sum_{j=1}^{n}|x_j - z_j|^p\right)^{1/p}$$
+              <p style="color:#9ca3af;font-size:0.82rem;margin-top:0.3rem">\(p=2\): Euclidean · \(p=1\): Manhattan · \(p\to\infty\): Chebyshev</p>
+            </div>
+            <div class="eq-card">
+              <span class="eq-label">Majority Vote (classification)</span>
+              $$\hat{y} = \underset{c}{\arg\max}\; \sum_{i \in \mathcal{N}_k(\mathbf{x})} \mathbf{1}[y^{(i)} = c]$$
+            </div>
+          </div>
+
+          <div class="insight-box" style="margin-top:0.8rem">
+            <strong>Bias–Variance tradeoff:</strong>
+            Small k → low bias, high variance (complex, jagged boundary, overfits noise).
+            Large k → high bias, low variance (smooth boundary, may underfit).
+            <br><br>
+            <strong>Important:</strong> KNN requires <em>feature normalisation</em> — features on larger scales
+            dominate the distance calculation and drown out smaller-scale features.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════
+         MODULE — ML CONCEPTS (TEXTBOOK)
+    ════════════════════════════════════════════════ -->
+    <section id="module-mlconcepts" class="module" aria-label="Introduction to Machine Learning Concepts">
+      <div class="module-header">
+        <h2>Introduction to Machine Learning</h2>
+        <p>Core concepts from the textbook — Tom Mitchell's formal definition, the ML taxonomy, and the main challenges you'll face in practice.</p>
+      </div>
+
+      <nav class="sub-nav" aria-label="ML Concepts sub-navigation">
+        <button class="sub-btn active" data-panel="mlc-panel-definition">Mitchell's Definition</button>
+        <button class="sub-btn" data-panel="mlc-panel-types">Types of ML</button>
+        <button class="sub-btn" data-panel="mlc-panel-challenges">ML Challenges</button>
+      </nav>
+
+      <!-- Sub-panel 1: Mitchell's Definition -->
+      <div id="mlc-panel-definition" class="sub-panel active">
+        <div class="module-body" style="display:block;max-width:760px;margin:0 auto">
+          <div class="equation-block">
+            <h3>Tom Mitchell's Definition (1997)</h3>
+            <div class="eq-card" style="border-color:#fbbf2450">
+              <p style="font-size:1.05rem;font-style:italic;color:#d1d5db;line-height:1.7">
+                "A computer program is said to learn from <strong style="color:#60a5fa">experience E</strong>
+                with respect to some class of <strong style="color:#f97316">tasks T</strong>
+                and <strong style="color:#34d399">performance measure P</strong>,
+                if its performance at tasks in T, as measured by P, improves with experience E."
+              </p>
+              <p style="color:#9ca3af;font-size:0.82rem;margin-top:0.5rem">— Tom Mitchell, <em>Machine Learning</em>, 1997</p>
+            </div>
+          </div>
+
+          <div class="mlc-etp-grid">
+            <div class="mlc-etp-card" style="border-color:#60a5fa40">
+              <div class="mlc-etp-letter" style="color:#60a5fa">E</div>
+              <div class="mlc-etp-name">Experience</div>
+              <p>The <strong>training data</strong> the model is exposed to. More experience generally leads to better performance (up to a point).</p>
+            </div>
+            <div class="mlc-etp-card" style="border-color:#f9741640">
+              <div class="mlc-etp-letter" style="color:#f97416">T</div>
+              <div class="mlc-etp-name">Task</div>
+              <p>What the model should <strong>do</strong> — classify images, predict prices, play a game, translate text, etc.</p>
+            </div>
+            <div class="mlc-etp-card" style="border-color:#34d39940">
+              <div class="mlc-etp-letter" style="color:#34d399">P</div>
+              <div class="mlc-etp-name">Performance</div>
+              <p>How we <strong>measure success</strong> at the task — accuracy, MSE, F1 score, win rate, BLEU score, etc.</p>
+            </div>
+          </div>
+
+          <h3 style="margin-top:1.5rem;color:#e5e7eb">Examples — <span id="mlc-ex-counter" style="color:#9ca3af;font-weight:400;font-size:0.9rem"></span></h3>
+          <div class="mlc-example-card">
+            <div class="mlc-example-task" id="mlc-task-name"></div>
+            <div class="mlc-example-row">
+              <span class="mlc-etp-pill" style="background:#60a5fa22;color:#60a5fa">T</span>
+              <span id="mlc-T"></span>
+            </div>
+            <div class="mlc-example-row">
+              <span class="mlc-etp-pill" style="background:#f9741622;color:#f97416">E</span>
+              <span id="mlc-E"></span>
+            </div>
+            <div class="mlc-example-row">
+              <span class="mlc-etp-pill" style="background:#34d39922;color:#34d399">P</span>
+              <span id="mlc-P"></span>
+            </div>
+            <div class="btn-row" style="margin-top:0.8rem">
+              <button id="mlc-prev" class="btn btn-outline">← Previous</button>
+              <button id="mlc-next" class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-panel 2: Types of ML -->
+      <div id="mlc-panel-types" class="sub-panel">
+        <div class="module-body" style="display:block">
+          <h3 style="color:#e5e7eb;margin-bottom:1rem">Supervised · Unsupervised · and beyond</h3>
+          <div id="mlc-types-grid" class="mlc-types-grid"></div>
+
+          <h3 style="color:#e5e7eb;margin:2rem 0 1rem">Learning Modes</h3>
+          <div id="mlc-modes-section"></div>
+        </div>
+      </div>
+
+      <!-- Sub-panel 3: ML Challenges -->
+      <div id="mlc-panel-challenges" class="sub-panel">
+        <div class="module-body" style="display:block;max-width:760px;margin:0 auto">
+          <p style="color:#9ca3af;margin-bottom:1rem">Click a challenge to expand it and see mitigation strategies.</p>
+          <div id="mlc-challenges-grid" class="mlc-challenges-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="module-quiz" class="module" aria-label="Knowledge Check Quiz">
+      <div class="module-header">
+        <h2>Knowledge Check</h2>
+        <p>Test your understanding of the core concepts from Weeks 1–4. Select an answer and get immediate, detailed feedback.</p>
+      </div>
+
+      <div class="quiz-container" id="quizContainer">
+        <!-- Injected by quiz.js -->
+      </div>
+
+      <div class="quiz-score-panel" id="quizScorePanel" style="display:none">
+        <h3 id="quizScoreTitle"></h3>
+        <p id="quizScoreMsg"></p>
+        <button class="btn btn-primary" id="quizRetry">Retry Quiz</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Based on CITS5508 lecture notes (UWA · Sem 1 2026 · Prof. Marcell Szikszai)</p>
+  </footer>
+
+  <!-- JS modules — load order matters -->
+  <script src="js/math-utils.js"></script>
+  <script src="js/gradient-descent.js"></script>
+  <script src="js/polynomial-regression.js"></script>
+  <script src="js/regularization.js"></script>
+  <script src="js/learning-curves.js"></script>
+  <script src="js/classification.js"></script>
+  <script src="js/feature-scaling.js"></script>
+  <script src="js/early-stopping.js"></script>
+  <script src="js/linear-algebra.js"></script>
+  <script src="js/calculus.js"></script>
+  <script src="js/functions-explorer.js"></script>
+  <script src="js/ridge-lasso.js"></script>
+  <script src="js/knn.js"></script>
+  <script src="js/ml-concepts.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>

@@ -1430,6 +1430,333 @@ function OptimisationTab() {
   );
 }
 
+// ── Vector Add/Sub Visualizer ─────────────────────────────────────────────────
+function VectorAddSubViz() {
+  const [ax, setAx] = useState(3);
+  const [ay, setAy] = useState(1);
+  const [bx, setBx] = useState(1);
+  const [by, setBy] = useState(2);
+  const [mode, setMode] = useState('add');
+  const canRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canRef.current;
+    if (!canvas) return;
+    const W = canvas.width = canvas.offsetWidth || 480;
+    const H = canvas.height = 260;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    const RANGE = 6;
+    const cx = W / 2, cy = H / 2;
+    const scale = Math.min(W, H) / (RANGE * 2 + 2);
+    const toX = x => cx + x * scale;
+    const toY = y => cy - y * scale;
+
+    ctx.strokeStyle = 'rgba(148,163,184,0.07)'; ctx.lineWidth = 1;
+    for (let i = -RANGE; i <= RANGE; i++) {
+      ctx.beginPath(); ctx.moveTo(toX(i), toY(-RANGE)); ctx.lineTo(toX(i), toY(RANGE)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(toX(-RANGE), toY(i)); ctx.lineTo(toX(RANGE), toY(i)); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(148,163,184,0.22)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(toX(-RANGE), toY(0)); ctx.lineTo(toX(RANGE), toY(0)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(toX(0), toY(-RANGE)); ctx.lineTo(toX(0), toY(RANGE)); ctx.stroke();
+    ctx.fillStyle = 'rgba(148,163,184,0.4)'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+    for (let i = -RANGE; i <= RANGE; i += 2) {
+      if (i !== 0) {
+        ctx.fillText(i, toX(i), toY(0) + 12);
+        ctx.textAlign = 'right'; ctx.fillText(i, toX(0) - 4, toY(i) + 3); ctx.textAlign = 'center';
+      }
+    }
+
+    const drawArrow = (ox, oy, ex, ey, color, width, label) => {
+      const px = toX(ox), py = toY(oy), qx = toX(ex), qy = toY(ey);
+      const angle = Math.atan2(qy - py, qx - px);
+      if (Math.hypot(qx - px, qy - py) < 2) return;
+      ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(qx, qy); ctx.stroke();
+      const hLen = 10, hAng = 0.42;
+      ctx.beginPath();
+      ctx.moveTo(qx, qy);
+      ctx.lineTo(qx - hLen * Math.cos(angle - hAng), qy - hLen * Math.sin(angle - hAng));
+      ctx.lineTo(qx - hLen * Math.cos(angle + hAng), qy - hLen * Math.sin(angle + hAng));
+      ctx.closePath(); ctx.fill();
+      if (label) {
+        const perp = angle + Math.PI / 2;
+        ctx.fillStyle = color; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(label, (px + qx) / 2 + 14 * Math.cos(perp), (py + qy) / 2 + 14 * Math.sin(perp));
+      }
+    };
+
+    const rx = mode === 'add' ? ax + bx : ax - bx;
+    const ry = mode === 'add' ? ay + by : ay - by;
+    const bEffX = mode === 'add' ? bx : -bx;
+    const bEffY = mode === 'add' ? by : -by;
+
+    if (mode === 'add') {
+      ctx.strokeStyle = 'rgba(148,163,184,0.12)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(toX(ax), toY(ay)); ctx.lineTo(toX(rx), toY(ry)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(toX(bx), toY(by)); ctx.lineTo(toX(rx), toY(ry)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0.3;
+      drawArrow(0, 0, bx, by, '#22d3ee', 1.5, null);
+      ctx.globalAlpha = 1;
+    }
+    drawArrow(0, 0, ax, ay, '#a78bfa', 2.5, 'a');
+    drawArrow(ax, ay, ax + bEffX, ay + bEffY, '#22d3ee', 2, mode === 'add' ? 'b' : '−b');
+    drawArrow(0, 0, rx, ry, '#34d399', 2.5, mode === 'add' ? 'a+b' : 'a−b');
+    ctx.fillStyle = 'rgba(148,163,184,0.6)';
+    ctx.beginPath(); ctx.arc(toX(0), toY(0), 3, 0, Math.PI * 2); ctx.fill();
+  }, [ax, ay, bx, by, mode]);
+
+  const rx = mode === 'add' ? ax + bx : ax - bx;
+  const ry = mode === 'add' ? ay + by : ay - by;
+
+  return (
+    <div className="m4-card">
+      <div className="m4-card-h">Vector Addition &amp; Subtraction</div>
+      <div className="m4-infobox" style={{fontSize:'0.79rem'}}>
+        Vectors combine <strong>component-wise</strong>. Geometrically: place b's tail at a's tip — the result spans from the origin to b's new tip (<em>head-to-tail</em> method).
+      </div>
+      <Tex src="\vec{a} \pm \vec{b} = \begin{bmatrix}a_1 \pm b_1 \\ a_2 \pm b_2 \\ \vdots \\ a_n \pm b_n\end{bmatrix}" block />
+      <div className="m4-radio-row" style={{marginTop:'0.5rem'}}>
+        {[['add','a + b'],['sub','a − b']].map(([m, lbl]) => (
+          <label key={m} className={`m4-rpill ${mode === m ? 'm4-rpill--on' : ''}`}>
+            <input type="radio" checked={mode === m} onChange={() => setMode(m)} style={{display:'none'}}/>
+            {lbl}
+          </label>
+        ))}
+      </div>
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.4rem 1rem', margin:'0.5rem 0'}}>
+        {[['a.x', ax, setAx, '#a78bfa'],['a.y', ay, setAy, '#a78bfa'],
+          ['b.x', bx, setBx, '#22d3ee'],['b.y', by, setBy, '#22d3ee']].map(([lbl, val, setter, col]) => (
+          <div key={lbl} className="m4-ctrl">
+            <div className="m4-ctrl-lbl"><span style={{color:col}}>{lbl}</span><span className="m4-ctrl-val">{val}</span></div>
+            <input type="range" min={-5} max={5} step={1} value={val} onChange={e => setter(+e.target.value)}/>
+          </div>
+        ))}
+      </div>
+      <canvas ref={canRef} className="m4-canvas" height="260"/>
+      <div className="m4-stats-row" style={{marginTop:'0.5rem'}}>
+        <div className="m4-stat"><span className="m4-stat-l" style={{color:'#a78bfa'}}>a</span><span className="m4-stat-v">({ax}, {ay})</span></div>
+        <div className="m4-stat"><span className="m4-stat-l" style={{color:'#22d3ee'}}>b</span><span className="m4-stat-v">({bx}, {by})</span></div>
+        <div className="m4-stat"><span className="m4-stat-l" style={{color:'#34d399'}}>{mode === 'add' ? 'a+b' : 'a−b'}</span><span className="m4-stat-v">({rx}, {ry})</span></div>
+      </div>
+      <div className="m4-infobox" style={{fontSize:'0.78rem', marginTop:'0.5rem'}}>
+        <strong>Subtraction</strong> a − b = a + (−b): flip b's direction, then add. The dashed parallelogram lines show both vectors from the origin completing to the result.
+      </div>
+    </div>
+  );
+}
+
+// ── Vector Products Visualizer ─────────────────────────────────────────────────
+function VectorProductViz() {
+  const [vx, setVx] = useState(3);
+  const [vy, setVy] = useState(1);
+  const [wx, setWx] = useState(1);
+  const [wy, setWy] = useState(3);
+  const [tab, setTab] = useState('dot');
+  const canRef = useRef(null);
+
+  const dot = vx * wx + vy * wy;
+  const vNorm = Math.hypot(vx, vy);
+  const wNorm = Math.hypot(wx, wy);
+  const cosTheta = vNorm > 0 && wNorm > 0 ? dot / (vNorm * wNorm) : 0;
+  const theta = Math.acos(Math.max(-1, Math.min(1, cosTheta)));
+  const outer = [[vx * wx, vx * wy], [vy * wx, vy * wy]];
+  const had = [vx * wx, vy * wy];
+
+  const cellBg = (val, sc = 16) => {
+    const t = Math.max(-1, Math.min(1, val / sc));
+    if (t > 0) return `rgba(52,211,153,${(t * 0.75 + 0.1).toFixed(2)})`;
+    if (t < 0) return `rgba(251,113,133,${(Math.abs(t) * 0.75 + 0.1).toFixed(2)})`;
+    return 'rgba(100,116,139,0.15)';
+  };
+
+  useEffect(() => {
+    if (tab !== 'dot') return;
+    const canvas = canRef.current;
+    if (!canvas) return;
+    const W = canvas.width = canvas.offsetWidth || 420;
+    const H = canvas.height = 220;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+
+    const RANGE = 5;
+    const cx = W / 2, cy = H / 2;
+    const scale = Math.min(W, H) / (RANGE * 2 + 2);
+    const toX = x => cx + x * scale;
+    const toY = y => cy - y * scale;
+
+    ctx.strokeStyle = 'rgba(148,163,184,0.07)'; ctx.lineWidth = 1;
+    for (let i = -RANGE; i <= RANGE; i++) {
+      ctx.beginPath(); ctx.moveTo(toX(i), toY(-RANGE)); ctx.lineTo(toX(i), toY(RANGE)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(toX(-RANGE), toY(i)); ctx.lineTo(toX(RANGE), toY(i)); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(148,163,184,0.22)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(toX(-RANGE), toY(0)); ctx.lineTo(toX(RANGE), toY(0)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(toX(0), toY(-RANGE)); ctx.lineTo(toX(0), toY(RANGE)); ctx.stroke();
+
+    const drawArrow = (ox, oy, ex, ey, color, width, label) => {
+      const px = toX(ox), py = toY(oy), qx = toX(ex), qy = toY(ey);
+      const angle = Math.atan2(qy - py, qx - px);
+      if (Math.hypot(qx - px, qy - py) < 2) return;
+      ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(qx, qy); ctx.stroke();
+      const hLen = 10, hAng = 0.42;
+      ctx.beginPath();
+      ctx.moveTo(qx, qy);
+      ctx.lineTo(qx - hLen * Math.cos(angle - hAng), qy - hLen * Math.sin(angle - hAng));
+      ctx.lineTo(qx - hLen * Math.cos(angle + hAng), qy - hLen * Math.sin(angle + hAng));
+      ctx.closePath(); ctx.fill();
+      if (label) {
+        const perp = angle + Math.PI / 2;
+        ctx.fillStyle = color; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(label, (px + qx) / 2 + 14 * Math.cos(perp), (py + qy) / 2 + 14 * Math.sin(perp));
+      }
+    };
+
+    // Projection of w onto v
+    const vLen2 = vx * vx + vy * vy;
+    const projS = vLen2 > 0 ? dot / vLen2 : 0;
+    const projX = projS * vx, projY = projS * vy;
+    ctx.strokeStyle = 'rgba(251,191,36,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(toX(projX), toY(projY)); ctx.lineTo(toX(wx), toY(wy)); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Angle arc
+    const vA = Math.atan2(-vy, vx);
+    const wA = Math.atan2(-wy, wx);
+    let sweep = wA - vA;
+    while (sweep > Math.PI) sweep -= 2 * Math.PI;
+    while (sweep < -Math.PI) sweep += 2 * Math.PI;
+    ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(toX(0), toY(0), 28, vA, vA + sweep, sweep < 0); ctx.stroke();
+    const midA = vA + sweep / 2;
+    ctx.fillStyle = '#fbbf24'; ctx.font = '11px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('θ', toX(0) + 40 * Math.cos(midA), toY(0) + 40 * Math.sin(midA));
+
+    if (Math.abs(projS) > 0.05) drawArrow(0, 0, projX, projY, '#fb7185', 2, 'proj');
+    drawArrow(0, 0, vx, vy, '#a78bfa', 2.5, 'v');
+    drawArrow(0, 0, wx, wy, '#22d3ee', 2.5, 'w');
+    ctx.fillStyle = 'rgba(148,163,184,0.6)';
+    ctx.beginPath(); ctx.arc(toX(0), toY(0), 3, 0, Math.PI * 2); ctx.fill();
+  }, [tab, vx, vy, wx, wy, dot]);
+
+  const cStyle = val => ({
+    padding:'8px 14px', textAlign:'center', background:cellBg(val),
+    borderRadius:4, color:'var(--text-1)', fontWeight:600,
+    border:'1px solid rgba(148,163,184,0.1)', fontFamily:'var(--font-mono)', fontSize:'0.85rem',
+  });
+
+  return (
+    <div className="m4-card">
+      <div className="m4-card-h">Vector Products — Visual</div>
+      <div className="m4-radio-row">
+        {[['dot','Dot Product (·)'],['outer','Tensor Product (⊗)'],['had','Hadamard (⊙)']].map(([k, lbl]) => (
+          <label key={k} className={`m4-rpill ${tab === k ? 'm4-rpill--on' : ''}`}>
+            <input type="radio" checked={tab === k} onChange={() => setTab(k)} style={{display:'none'}}/>
+            {lbl}
+          </label>
+        ))}
+      </div>
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.4rem 1rem', margin:'0.5rem 0'}}>
+        {[['v.x', vx, setVx, '#a78bfa'],['v.y', vy, setVy, '#a78bfa'],
+          ['w.x', wx, setWx, '#22d3ee'],['w.y', wy, setWy, '#22d3ee']].map(([lbl, val, setter, col]) => (
+          <div key={lbl} className="m4-ctrl">
+            <div className="m4-ctrl-lbl"><span style={{color:col}}>{lbl}</span><span className="m4-ctrl-val">{val}</span></div>
+            <input type="range" min={-4} max={4} step={1} value={val} onChange={e => setter(+e.target.value)}/>
+          </div>
+        ))}
+      </div>
+
+      {tab === 'dot' && (
+        <>
+          <canvas ref={canRef} className="m4-canvas" height="220"/>
+          <div className="m4-stats-row" style={{marginTop:'0.5rem'}}>
+            <div className="m4-stat"><span className="m4-stat-l">v · w</span><span className="m4-stat-v" style={{color:'#34d399'}}>{dot.toFixed(2)}</span></div>
+            <div className="m4-stat"><span className="m4-stat-l">|v|</span><span className="m4-stat-v" style={{color:'#a78bfa'}}>{vNorm.toFixed(2)}</span></div>
+            <div className="m4-stat"><span className="m4-stat-l">|w|</span><span className="m4-stat-v" style={{color:'#22d3ee'}}>{wNorm.toFixed(2)}</span></div>
+            <div className="m4-stat"><span className="m4-stat-l">θ</span><span className="m4-stat-v" style={{color:'#fbbf24'}}>{(theta * 180 / Math.PI).toFixed(1)}°</span></div>
+          </div>
+          <div className="m4-infobox" style={{fontSize:'0.78rem', marginTop:'0.5rem'}}>
+            <strong>v·w = |v||w|cos(θ).</strong> Zero when perpendicular (θ=90°). The <span style={{color:'#fb7185'}}>pink arrow</span> is the projection of <strong>w</strong> onto <strong>v</strong> — how much of w "points along" v. Used in similarity, loss functions, and gradient convergence checks.
+          </div>
+        </>
+      )}
+
+      {tab === 'outer' && (
+        <>
+          <div style={{fontSize:'0.79rem', color:'var(--text-2)', margin:'0.5rem 0'}}>
+            <strong>v ⊗ w = v wᵀ</strong> — each cell (i,j) = vᵢ × wⱼ. Produces a <em>matrix</em> (rank-1 tensor). <span style={{color:'#34d399'}}>Green</span> = positive, <span style={{color:'#fb7185'}}>red</span> = negative.
+          </div>
+          <div style={{overflowX:'auto', display:'flex', justifyContent:'center'}}>
+            <table style={{borderCollapse:'separate', borderSpacing:4, fontFamily:'var(--font-mono)'}}>
+              <thead>
+                <tr>
+                  <th style={{padding:'4px 8px', color:'rgba(148,163,184,0.4)', fontSize:'0.7rem'}}></th>
+                  <th style={{padding:'4px 14px', color:'#22d3ee', fontWeight:700}}>w₁={wx}</th>
+                  <th style={{padding:'4px 14px', color:'#22d3ee', fontWeight:700}}>w₂={wy}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {outer.map((row, i) => (
+                  <tr key={i}>
+                    <td style={{padding:'4px 8px', color:'#a78bfa', fontWeight:700}}>v{i+1}={[vx,vy][i]}</td>
+                    {row.map((val, j) => <td key={j} style={cStyle(val)}>{val}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="m4-infobox" style={{fontSize:'0.78rem', marginTop:'0.75rem'}}>
+            <strong>Tensor product:</strong> Dot product compresses two vectors into 1 scalar (loses structure). Outer product <em>expands</em> them into a matrix, preserving all pairwise interactions. Shape: (n,) ⊗ (m,) → (n×m). Used in: neural network weight updates (δW = activationᵀ × gradient), covariance matrices, and attention score computation.
+          </div>
+          <div style={{fontSize:'0.79rem', color:'var(--text-2)', marginTop:'0.25rem'}}>
+            <strong>Rank-1 note:</strong> Every row is a scalar multiple of w — this matrix always has rank 1. Full-rank matrices are sums of many such outer products.
+          </div>
+        </>
+      )}
+
+      {tab === 'had' && (
+        <>
+          <div style={{fontSize:'0.79rem', color:'var(--text-2)', margin:'0.5rem 0'}}>
+            <strong>v ⊙ w</strong> — element-wise product. Same shape as inputs. No summation — contrast with dot product.
+          </div>
+          <div style={{display:'flex', gap:'0.75rem', alignItems:'center', justifyContent:'center', padding:'0.5rem 0', fontFamily:'var(--font-mono)'}}>
+            <div style={{display:'flex', flexDirection:'column', gap:6, alignItems:'center'}}>
+              <div style={{fontSize:'0.7rem', color:'rgba(148,163,184,0.5)'}}>v</div>
+              {[vx, vy].map((val, i) => (
+                <div key={i} style={{width:52, height:36, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(167,139,250,0.15)', borderRadius:4, border:'1px solid rgba(167,139,250,0.35)', color:'#a78bfa', fontWeight:700}}>{val}</div>
+              ))}
+            </div>
+            <div style={{fontSize:'1.5rem', color:'var(--text-2)', paddingTop:'1.4rem'}}>⊙</div>
+            <div style={{display:'flex', flexDirection:'column', gap:6, alignItems:'center'}}>
+              <div style={{fontSize:'0.7rem', color:'rgba(148,163,184,0.5)'}}>w</div>
+              {[wx, wy].map((val, i) => (
+                <div key={i} style={{width:52, height:36, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(34,211,238,0.15)', borderRadius:4, border:'1px solid rgba(34,211,238,0.35)', color:'#22d3ee', fontWeight:700}}>{val}</div>
+              ))}
+            </div>
+            <div style={{fontSize:'1.5rem', color:'var(--text-2)', paddingTop:'1.4rem'}}>=</div>
+            <div style={{display:'flex', flexDirection:'column', gap:6, alignItems:'center'}}>
+              <div style={{fontSize:'0.7rem', color:'rgba(148,163,184,0.5)'}}>v ⊙ w</div>
+              {had.map((val, i) => (
+                <div key={i} style={{width:52, height:36, display:'flex', alignItems:'center', justifyContent:'center', background:cellBg(val), borderRadius:4, border:'1px solid rgba(148,163,184,0.2)', color:'var(--text-1)', fontWeight:700}}>{val}</div>
+              ))}
+            </div>
+          </div>
+          <div style={{fontSize:'0.75rem', color:'rgba(148,163,184,0.55)', textAlign:'center', marginTop:'0.2rem'}}>
+            ({vx}×{wx} = {had[0]},&nbsp;&nbsp;{vy}×{wy} = {had[1]})
+          </div>
+          <div className="m4-infobox" style={{fontSize:'0.78rem', marginTop:'0.75rem'}}>
+            <strong>Not a dot product</strong> — no summation, result is still a vector. Used in: LSTM/GRU gates (mask which memory to keep), attention masking, element-wise feature scaling, and dropout (multiply activations by a 0/1 mask vector).
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Calculus Tab ──────────────────────────────────────────────────────────────
 function CalculusTab() {
   return (
@@ -1491,6 +1818,10 @@ function CalculusTab() {
             In practice we stop when the gradient norm is small (below tolerance ε), not exactly zero. This handles floating-point and near-flat regions.
           </div>
         </div>
+      </div>
+      <div className="m4-two-col" style={{marginTop:'1rem'}}>
+        <VectorAddSubViz />
+        <VectorProductViz />
       </div>
     </div>
   );
@@ -1942,8 +2273,398 @@ function AlgorithmsTab() {
   );
 }
 
+// ── Practice Exam Data ────────────────────────────────────────────────────────
+const PRACTICE_QUESTIONS = [
+  // ── From practice-ques.md ────────────────────────────────────────────────────
+  {
+    id: 1,
+    topic: 'Grammar & Hypothesis Space',
+    source: 'Practice Exam Q1',
+    time: '8–10 min',
+    parts: [
+      { label: 'a', prompt: 'Define "hypothesis space" and "model (hypothesis)" in the context of an optimisation framework that uses a grammar-based language.' },
+      { label: 'b', prompt: 'Nymeria\'s trading grammar generates "Buy" signals using filters (sma, lma, ema), comparators (<, =, >), and logic operators (∧, ∨). Give one valid expression in the hypothesis space and one that is NOT in it. Justify each.' },
+      { label: 'c', prompt: 'Is the hypothesis space defined by this grammar finite or infinite? Justify your answer.' },
+      { label: 'd', prompt: 'Write a "Golden Cross" expression in this grammar: the 10-day EMA has just crossed above the 20-day SMA at time i. Is it in the hypothesis space?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Hypothesis space: the complete set of all valid expressions (models/programs/rules) generatable by the chosen language — i.e., all syntactically valid "Buy" signals under the grammar. A model (hypothesis): one specific instance from that space; a single trading rule that maps filter outputs to a Buy signal.' },
+      { label: 'b', answer: 'In the space: sma(10, i) > sma(50, i) — buy when 10-day SMA is above 50-day SMA. Valid because it matches Comp_expr → Filter Comparator Filter with sma as Fname, 10/50 as N, i as T, and > as Comparator.\n\nNot in the space: sma(10, i) − sma(50, i) > 0. This uses arithmetic on filter outputs, which the grammar does not support. Comp_expr only allows Filter Comparator Filter, not arithmetic expressions.' },
+      { label: 'c', answer: 'Infinite. N is an unbounded integer (1, 2, 3, …), so there are infinitely many possible filters like sma(1,i), sma(2,i), sma(3,i), … The grammar can also produce arbitrarily long conjunctions/disjunctions via Buy → Comp_expr Logic_op Buy.' },
+      { label: 'd', answer: 'ema(10, i) > sma(20, i) ∧ ema(10, i−1) < sma(20, i−1)\n\nThis captures: currently 10-EMA is above 20-SMA (crossed above), but at i−1 it was below (just crossed). Yes, it is in the hypothesis space — both conjuncts are valid Comp_expr terms joined by ∧ (Logic_op), matching Buy → Comp_expr Logic_op Buy.' },
+    ],
+  },
+  {
+    id: 2,
+    topic: 'Hill Climbing & Search',
+    source: 'Practice Exam Q2',
+    time: '10–12 min',
+    parts: [
+      { label: 'a', prompt: 'How would you evaluate the quality (fitness) of a trading rule model generated by Nymeria\'s grammar? What metric would you use?' },
+      { label: 'b', prompt: 'Is Nymeria\'s search space "well-behaved"? Which of the following are applicable: gradient descent, direct methods (e.g. Nelder-Mead), stochastic single-state methods (e.g. hill climbing)? Justify each.' },
+      { label: 'c', prompt: 'Write pseudocode for the basic Hill Climbing algorithm (the (1+1) variant).' },
+      { label: 'd', prompt: 'List four valid "Tweak" operations for Nymeria\'s models. Do they stay within the hypothesis space?' },
+      { label: 'e', prompt: 'Compare Hill Climbing and Steepest Ascent Hill Climbing. What is the computational trade-off?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Backtest the model on historical price data and measure a fitness metric such as total return, Sharpe ratio, win rate, or profit factor. Fitness = how well the Buy signal would have performed over a historical window.' },
+      { label: 'b', answer: 'The space is NOT smooth — it mixes discrete structural choices (grammar rules, comparators, filter types) and integer parameters (N values).\n\n• Gradient descent: ❌ Mostly no. Space is largely discrete/symbolic; gradients are undefined for structural choices.\n• Direct methods (e.g. Nelder-Mead): ⚠️ Partially. Could work on numeric parameters (N values) if structure is fixed, but Nelder-Mead requires a continuous vector space.\n• Stochastic single-state (hill climbing, SA): ✅ Yes. Handle discrete/combinatorial spaces naturally via grammar-aware Tweak operators.' },
+      { label: 'c', answer: 'function HillClimb(evaluate, tweak, initial):\n  current ← initial\n  loop:\n    candidate ← tweak(current)\n    if evaluate(candidate) ≥ evaluate(current):\n      current ← candidate\n  until termination condition met\n  return current' },
+      { label: 'd', answer: '1. Change parameter N — e.g., sma(10, i) → sma(12, i) ✅ always valid\n2. Change filter type — e.g., sma → ema ✅ always valid\n3. Change time point T — i → i−1 ✅ always valid\n4. Change comparator — < → > or = ✅ always valid\n5. Add/remove a conjunct or disjunct — ⚠️ need grammar-aware tweak to ensure valid structure\n6. Swap a sub-expression — ⚠️ same, requires care' },
+      { label: 'e', answer: 'Hill Climbing (1+1): generates one tweak, accepts if improvement → fast per iteration but may take suboptimal direction.\n\nSteepest Ascent HC (1+n): generates n tweaks, picks the BEST one → more deliberate path but evaluates n candidates per step.\n\nTrade-off: Steepest Ascent uses n× more compute per step but takes a locally better direction. For Nymeria\'s large N-valued neighbourhood, this could be very expensive.' },
+    ],
+  },
+  {
+    id: 3,
+    topic: 'Search Space Theory & Randomness',
+    source: 'Practice Exam Q3',
+    time: '6–8 min',
+    parts: [
+      { label: 'a', prompt: 'For each of the following search space types, state whether we can guarantee finding the global optimum and explain why: (i) finite and enumerable, (ii) infinite but enumerable, (iii) infinite and non-enumerable.' },
+      { label: 'b', prompt: 'List four reasons why randomness is important in optimisation algorithms.' },
+    ],
+    solution: [
+      { label: 'a', answer: '(i) Finite & enumerable: ✅ Yes. We can evaluate every candidate in finite time — exhaustive search guarantees finding the optimum.\n\n(ii) Infinite but enumerable: ❌ No, in general. We can list candidates in order (e.g., N = 1, 2, 3, …) but may never reach the optimum in finite time.\n\n(iii) Infinite & non-enumerable: ❌ No. We cannot even systematically list all candidates; exhaustive search is fundamentally impossible.' },
+      { label: 'b', answer: '1. Escaping local optima — deterministic methods get stuck; randomness allows jumps to new regions.\n2. Exploration vs. exploitation — randomness drives exploration of unseen search space.\n3. Avoiding bias — removes systematic blind spots in search direction.\n4. Random restarts — lets hill climbing sample multiple basins of attraction.\n5. Stochastic acceptance (e.g. SA) — probabilistically accepting worse solutions prevents premature convergence.' },
+    ],
+  },
+  // ── Lecture-derived questions ────────────────────────────────────────────────
+  {
+    id: 4,
+    topic: 'Optimisation Framework',
+    source: 'Lecture 3',
+    time: '8–10 min',
+    parts: [
+      { label: 'a', prompt: 'Name and briefly describe the three key ingredients of any optimisation problem.' },
+      { label: 'b', prompt: 'Write the practical definition of optimisation as a mathematical formula. Distinguish between the "ideal" and "practical" definitions.' },
+      { label: 'c', prompt: 'Language A is "more expressive" than language B. Formally define this, and give two examples: one from formal grammars (Chomsky hierarchy) and one from mathematical functions.' },
+    ],
+    solution: [
+      { label: 'a', answer: '1. Language (Representation) — defines the hypothesis space; what solutions look like. If you can\'t describe it, you can\'t model it.\n2. Model (Hypothesis/Candidate Solution) — one specific instance expressible in the chosen language; an approximation/abstraction of the real world.\n3. Metric (Evaluation) — a function f : H → ℝ measuring how good a hypothesis is. Also called: error function, cost function, fitness function, objective function.' },
+      { label: 'b', answer: 'Ideal: ĥ = argmin_{h∈H} f(h) — find the hypothesis in H with minimum error to the target.\n\nPractical: ĥ = argmin_{h∈H} f(h) subject to compute ≤ C_max — find as good a hypothesis as possible within a specified compute budget. In complex problems it may be too expensive or impossible to find the true minimum.' },
+      { label: 'c', answer: 'A is more expressive than B if: (1) everything describable in B can also be described in A (A ⊇ B), AND (2) something can be described in A that cannot be described in B (A ⊄ B). Written: A ⊃ B.\n\nFormal grammar example: Context-free languages (Type-2) are more expressive than regular languages (Type-3). CFGs can describe a^n b^n; no regular grammar can.\n\nMathematical functions: The class of polynomial functions is more expressive than linear functions — every linear function y = ax + b is also a polynomial, but y = x² is polynomial but not linear.' },
+    ],
+  },
+  {
+    id: 5,
+    topic: 'Intelligence & AI History',
+    source: 'Lectures 1–2',
+    time: '6–8 min',
+    parts: [
+      { label: 'a', prompt: 'Draw and describe Russell & Norvig\'s four-quadrant model of AI. Give one example system in each quadrant.' },
+      { label: 'b', prompt: 'Compare "symbolic" and "sub-symbolic" AI. Give two examples of each. Why is this called the "religious wars" of AI?' },
+      { label: 'c', prompt: 'Using the Morris et al. (2024) AGI levels table, classify: ChatGPT, AlphaGo, AlphaFold, and Grammarly. Justify each.' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Two axes: Thinking ↔ Acting (rows), Humanly ↔ Rationally (columns).\n\nTop-left (Think humanly): Cognitive modelling systems, e.g. the General Problem Solver (Newell & Simon). "The study of mental faculties through computational models."\n\nTop-right (Think rationally): Logic-based AI, e.g. Prolog theorem provers. "The study of ideal intelligent behaviour in artifacts."\n\nBottom-left (Act humanly): Systems designed to be indistinguishable from humans, e.g. a Turing Test chatbot.\n\nBottom-right (Act rationally): Rational agent systems that maximise utility, e.g. AlphaGo, self-driving cars. "AI is concerned with intelligent behaviour in artifacts." (Nilsson)' },
+      { label: 'b', answer: 'Symbolic AI: uses explicit symbols, rules, and logic. Designed or learnt, more human-interpretable. Examples: expert systems, logic programming (Prolog), grammar-based NLP.\n\nSub-symbolic AI: uses weights/parameters in networks, learnt or evolved, less interpretable. Examples: neural networks (CNNs, LLMs), Bayesian networks, SVMs.\n\n"Religious wars" because advocates of each camp historically argued theirs was the "true" path to AI — a deep philosophical and technical divide that continues today.' },
+      { label: 'c', answer: 'ChatGPT: Emerging AGI (Level 1, General) — roughly equal to unskilled human on a wide range of non-physical tasks.\n\nAlphaGo: Virtuoso Narrow AI (Level 4, Narrow) — beats 99th percentile of humans at Go, but only at Go.\n\nAlphaFold: Superhuman Narrow AI (Level 5, Narrow) — outperforms 100% of humans at protein structure prediction.\n\nGrammarly: Expert Narrow AI (Level 3, Narrow) — at least 90th percentile of skilled adults at spelling/grammar checking.' },
+    ],
+  },
+  {
+    id: 6,
+    topic: 'Adaptation in Nature',
+    source: 'Lecture 2',
+    time: '5–6 min',
+    parts: [
+      { label: 'a', prompt: 'Describe the two axes used to classify mechanisms of adaptation in nature. Give one example per quadrant.' },
+      { label: 'b', prompt: 'The course claims AI = optimisation. Explain this claim in 3–4 sentences, relating optimisation to adaptive systems.' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Axis 1 — Timespan: short term (individual lifespan) ↔ long term (species/millennia)\nAxis 2 — Scope: individual ↔ population\n\nExamples:\n• Short term, individual: learning (acquiring new skills), physical adaptation (training)\n• Short term, population: division of labour, coordinated behaviour (pilots flying in formation)\n• Long term, individual: physical changes within a lifespan from environmental pressure\n• Long term, population: evolution (genetic change across generations, e.g. antifreeze proteins in Antarctic fish); also collective social behaviour (bees, ants) that outlives individuals' },
+      { label: 'b', answer: 'Optimisation is the engine of AI — the mechanism by which adaptive systems improve. Every learning algorithm, every evolutionary process, and every neural network training loop is fundamentally searching for the best hypothesis in some space. The three ingredients (language, model, metric) define this search precisely. Adaptive systems are those that use search/optimisation to respond to their environment over time.' },
+    ],
+  },
+  {
+    id: 7,
+    topic: 'Calculus: Derivatives & Critical Points',
+    source: 'Lecture 5',
+    time: '10–12 min',
+    parts: [
+      { label: 'a', prompt: 'Using the limit definition, derive the derivative of f(x) = x².' },
+      { label: 'b', prompt: 'Find all critical points of f(x) = x³ − 6x² + 9x + 1, and classify each as a local min, local max, or saddle point using the second derivative test.' },
+      { label: 'c', prompt: 'State the chain rule. Use it to differentiate g(x) = (x⁴ − 3x)⁷.' },
+      { label: 'd', prompt: 'Why are derivatives so useful for optimisation? What does f\'(c) = 0 guarantee, and what additional check is needed?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'f\'(x) = lim_{Δx→0} [f(x+Δx) − f(x)] / Δx\n= lim_{Δx→0} [(x+Δx)² − x²] / Δx\n= lim_{Δx→0} [x² + 2xΔx + (Δx)² − x²] / Δx\n= lim_{Δx→0} [2x + Δx]\n= 2x' },
+      { label: 'b', answer: 'f\'(x) = 3x² − 12x + 9 = 3(x² − 4x + 3) = 3(x−1)(x−3)\nCritical points: x = 1 and x = 3.\n\nf\'\'(x) = 6x − 12\n\nAt x = 1: f\'\'(1) = 6(1) − 12 = −6 < 0 → local MAXIMUM\nAt x = 3: f\'\'(3) = 6(3) − 12 = 6 > 0 → local MINIMUM' },
+      { label: 'c', answer: 'Chain rule: d/dx f(g(x)) = f\'(g(x)) · g\'(x), or equivalently dy/dx = (dy/du)(du/dx) where u = g(x).\n\nFor g(x) = (x⁴ − 3x)⁷: let u = x⁴ − 3x, y = u⁷\ndy/du = 7u⁶ = 7(x⁴ − 3x)⁶\ndu/dx = 4x³ − 3\n\ng\'(x) = 7(x⁴ − 3x)⁶ · (4x³ − 3)' },
+      { label: 'd', answer: 'At critical points f\'(c) = 0 — the function is neither increasing nor decreasing; these are candidates for local extrema. However f\'(c) = 0 only guarantees a stationary point — it could be a maximum, minimum, or saddle point.\n\nAdditional check (Second Derivative Test):\n• f\'\'(c) > 0 → concave up → local minimum\n• f\'\'(c) < 0 → concave down → local maximum\n• f\'\'(c) = 0 → test inconclusive; examine f\' either side of c' },
+    ],
+  },
+  {
+    id: 8,
+    topic: 'Gradient Descent & Newton-Raphson',
+    source: 'Lecture 6',
+    time: '10–12 min',
+    parts: [
+      { label: 'a', prompt: 'Write out the 1D Gradient Descent algorithm with stopping criteria. What role does α play? What happens when α is too small or too large?' },
+      { label: 'b', prompt: 'Write the Newton-Raphson update rule for optimisation. Why does it automatically choose a good step size? For a quadratic f(x) = ax² + b, how many NR steps does it take? Show this.' },
+      { label: 'c', prompt: 'Write the Gradient Ascent with Restarts algorithm. Under what conditions can it eventually find the global optimum?' },
+      { label: 'd', prompt: 'Write the multivariate gradient descent update rule using ∇f. What is ∇f for f(x₁, x₂) = 3x₁² + x₂²?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Algorithm: 1D Gradient Descent\n1: x ← random initial value\n2: repeat\n3:   x ← x − α f\'(x)\n4: until |f\'(x)| < ε or iteration limit reached\n5: return x\n\nRole of α (learning rate): scales the step size. The sign of f\'(x) gives direction; α scales magnitude.\n\nToo small α: slow convergence — many iterations to reach minimum.\nToo large α: overshoot — oscillates around minimum, may never converge.\n\nIdeal for quadratics: steps naturally shrink as we approach minimum (f\'(x) → 0).' },
+      { label: 'b', answer: 'NR for optimisation: x_{n+1} = x_n − f\'(x_n) / f\'\'(x_n)\n\nWhy it auto-scales: divides slope by curvature. Large curvature → small step (needed near tight bends). Flat region → large step. Approximates f with a local quadratic, matching both value and curvature at x_n.\n\nFor f(x) = ax² + b:\nf\'(x) = 2ax, f\'\'(x) = 2a\nx_{n+1} = x_n − 2ax_n / 2a = x_n − x_n = 0\n\nOne step! NR finds the exact minimum of a quadratic in a single iteration.' },
+      { label: 'c', answer: 'Algorithm: Gradient Ascent with Restarts\n1: x⃗ ← random initial value; x⃗* ← x⃗\n2: repeat\n3:   repeat\n4:     x⃗ ← x⃗ + α∇f(x⃗)\n5:   until ‖∇f(x⃗)‖ < ε\n6:   if f(x⃗) > f(x⃗*) then x⃗* ← x⃗\n7:   x⃗ ← random value\n8: until time exhausted\n9: return x⃗*\n\nCan find global optimum eventually if: (1) search space is bounded AND (2) number of local optima is finite. No guarantees in general for infinite/non-enumerable spaces.' },
+      { label: 'd', answer: 'Multivariate update: x⃗ ← x⃗ − α∇f(x⃗)\n\nFor f(x₁, x₂) = 3x₁² + x₂²:\n∂f/∂x₁ = 6x₁\n∂f/∂x₂ = 2x₂\n\n∇f(x₁, x₂) = [6x₁, 2x₂]ᵀ\n\nUpdate: [x₁, x₂] ← [x₁ − 6αx₁, x₂ − 2αx₂]' },
+    ],
+  },
+  {
+    id: 9,
+    topic: 'Direct Methods',
+    source: 'Lecture 7',
+    time: '8–10 min',
+    parts: [
+      { label: 'a', prompt: 'What distinguishes "direct methods" from gradient methods? Give two situations where direct methods must be used.' },
+      { label: 'b', prompt: 'Describe Cyclic Coordinate Search (CCS). What is the "diagonal valley" problem? How does the acceleration step address it?' },
+      { label: 'c', prompt: 'Explain the five operations of the Nelder-Mead simplex method (Reflect, Expand, Contract outside, Contract inside, Shrink). What are the typical parameter values?' },
+      { label: 'd', prompt: 'Why does Nelder-Mead "foreshadow population-based methods"? In what sense is it doing collective intelligence?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Direct methods rely solely on evaluating the objective function f(x) — no derivatives needed.\n\nSituations requiring direct methods:\n1. Search space is non-differentiable (e.g. discrete combinatorial spaces like JSSP Gantt charts)\n2. Function is a black box — we can evaluate quality but don\'t know the mathematical form\n3. Space is discontinuous or not continuous' },
+      { label: 'b', answer: 'CCS (Coordinate Descent): optimises one variable at a time while holding all others fixed — a series of 1D line searches along each basis vector eᵢ in sequence. Repeats cycles until improvement < ε.\n\nDiagonal valley problem: if the optimal direction is diagonal (e.g. 45°), CCS takes a "staircase" path requiring many iterations — it can\'t move diagonally because it\'s restricted to axis-aligned steps.\n\nAcceleration step: after a full cycle, compute the net progress vector u = x^n − x^0 and do one extra line search in that direction. This moves diagonally along the valley, much faster traversal.' },
+      { label: 'c', answer: 'Let x̄ = centroid of all vertices except the worst (x_h).\n\nReflect: x_r = x̄ + α(x̄ − x_h), α=1. Mirrors x_h through the centroid.\nExpand: x_e = x̄ + β(x_r − x̄), β=2. Pushes further if reflection was very good.\nContract (outside): x_c = x̄ + γ(x̄ − x_h), γ=0.5. Pulls back slightly if reflection was mediocre.\nContract (inside): x_c = x̄ + γ(x_h − x̄), γ=0.5. When reflection was worse than x_h — try the other side.\nShrink: x_i ← x_l + σ(x_i − x_l), σ=0.5. Collapses simplex toward the best vertex.\n\nTypical values: α=1, β=2, γ=0.5, σ=0.5.' },
+      { label: 'd', answer: 'Nelder-Mead maintains n+1 candidate solutions simultaneously (the simplex vertices). No single candidate drives the search — decisions are made based on the relationships between all vertices (centroid, best, worst). Each iteration, the entire group\'s information informs the next move.\n\nThis is collective intelligence: the group\'s combined knowledge determines search direction, not any individual candidate. This directly foreshadows genetic algorithms and swarm methods, which also maintain and evolve a population of candidates.' },
+    ],
+  },
+  {
+    id: 10,
+    topic: 'Hill Climbing Variants & Exploration/Exploitation',
+    source: 'Lecture 8',
+    time: '8–10 min',
+    parts: [
+      { label: 'a', prompt: 'Explain the (1+1), (1+n), and (1,n) notation for hill climbing variants. Write pseudocode for Steepest Ascent HC with Replacement (1,n).' },
+      { label: 'b', prompt: 'Define the exploration vs. exploitation trade-off in optimisation. How do the following hyper-parameters each control this trade-off: (i) σ in Gaussian convolution, (ii) n in Steepest Ascent HC, (iii) step-size r in bounded uniform convolution.' },
+      { label: 'c', prompt: 'Describe the Bounded Uniform Convolution tweak (Algorithm 8). What are its hyper-parameters p and r, and what does each control?' },
+    ],
+    solution: [
+      { label: 'a', answer: '(1+1): select winner from 1 existing + 1 tweaked. Basic hill climbing.\n(1+n): select winner from 1 existing + n tweaked candidates. Steepest Ascent HC.\n(1,n): select winner from n tweaked candidates only (existing S is replaced regardless). SA HC with Replacement.\n\nAlgorithm: Steepest Ascent HC with Replacement (1,n)\n1: n ← number of tweaks; S ← init; Best ← S\n2: repeat\n3:   R ← Tweak(Copy(S))\n4:   for n−1 times:\n5:     W ← Tweak(Copy(S))\n6:     if Quality(W) > Quality(R): R ← W\n7:   S ← R  [always replace]\n8:   if Quality(S) > Quality(Best): Best ← S\n9: until ideal or time up\n10: return Best' },
+      { label: 'b', answer: 'Exploration: searching broadly across the space — trying many different regions, risking missing the local optimum.\nExploitation: focusing locally — refining the current best solution, risk of being stuck in a local optimum.\n\n(i) σ in Gaussian convolution: large σ → large (but rare) jumps → more exploration. Small σ → tiny tweaks → exploitation. Direct exploration knob.\n\n(ii) n in Steepest Ascent HC: large n → evaluates more candidates → more selective pressure → suppresses extreme choices from a large σ → effectively less exploration. The interaction is subtle: depends on problem landscape.\n\n(iii) r in bounded uniform convolution: r is the half-range of uniform noise. Large r → large possible tweaks → more exploration. Small r → small tweaks → exploitation. Unlike Gaussian, no "long tail" — cannot make arbitrarily large jumps.' },
+      { label: 'c', answer: 'Bounded Uniform Convolution:\nFor each element v_i with probability p:\n  sample n uniformly from [−r, r]\n  if min ≤ v_i + n ≤ max: v_i ← v_i + n\n  (repeat until within bounds)\n\np (probability): controls how many elements are tweaked each iteration. p = 1 → all elements tweaked. p = 0.5 → roughly half tweaked on average.\n\nr (half-range): controls the maximum size of each tweak. Small r → "local" search (exploitation). Large r → larger jumps possible (exploration). Key difference from Gaussian: no probability of arbitrarily large steps — bounded by r.' },
+    ],
+  },
+  {
+    id: 11,
+    topic: 'Simulated Annealing',
+    source: 'Lecture 9',
+    time: '8–10 min',
+    parts: [
+      { label: 'a', prompt: 'Explain the metallurgical analogy behind Simulated Annealing. How does this translate to the optimisation algorithm?' },
+      { label: 'b', prompt: 'Write the Simulated Annealing acceptance probability formula. Analyse what happens as: (i) t → ∞, (ii) t → 0, (iii) the quality gap |Q(R) − Q(S)| increases.' },
+      { label: 'c', prompt: 'Write the full SA algorithm (Algorithm 13). What is the role of the "cooling schedule"? Give an example cooling schedule.' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Metallurgical analogy: when metal is annealed, it is heated to a high temperature (atoms become mobile, can rearrange) then slowly cooled. Rapid cooling traps atoms in suboptimal configurations (hard, brittle); slow cooling allows atoms to settle into low-energy crystal structures (ideal arrangement).\n\nOptimisation translation: high temperature → system has lots of "energy" → can jump away from local optima freely (exploration). Temperature decreases over time → jumps become less likely → algorithm settles into a good solution (exploitation). The cooling rate controls how smoothly the transition from exploration to exploitation occurs.' },
+      { label: 'b', answer: 'P(t, R, S) = e^{(Quality(R) − Quality(S)) / t}, for Quality(R) < Quality(S) (R is worse).\n\n(i) t → ∞: exponent → 0, so P → e^0 = 1. Almost any candidate accepted — pure random walk (maximum exploration).\n\n(ii) t → 0: exponent → −∞, so P → 0. Worse candidates almost never accepted — pure hill climb (maximum exploitation).\n\n(iii) Larger quality gap |Q(R) − Q(S)|: exponent becomes more negative → P decreases. Mildly worse solutions have higher chance of acceptance than drastically worse ones — a sensible grading of risk.' },
+      { label: 'c', answer: 'Algorithm: Simulated Annealing\n1: t ← high initial temperature\n2: S ← initial candidate; Best ← S\n3: repeat\n4:   R ← Tweak(Copy(S))\n5:   if Q(R) > Q(S) or rand[0,1] < e^{(Q(R)−Q(S))/t}:\n6:     S ← R\n7:   Decrease t  [cooling step]\n8:   if Q(S) > Q(Best): Best ← S\n9: until time up or t ≤ 0\n10: return Best\n\nCooling schedule: determines how t decreases over time. Must balance exploration (high t) and exploitation (low t).\n\nExample: geometric cooling t ← β · e^{−αT} where T is elapsed time, α controls rate of decrease, β is initial temperature scale.' },
+    ],
+  },
+  {
+    id: 12,
+    topic: 'Tabu Search & ILS',
+    source: 'Lecture 9',
+    time: '8–10 min',
+    parts: [
+      { label: 'a', prompt: 'Explain the mechanism of Tabu Search. What data structure stores the tabu list? What trade-off does list length l create?' },
+      { label: 'b', prompt: 'Explain Iterated Local Search (ILS). What is the "home base" H? Write out the two design functions NewHomeBase(H, S) for "hill climb of hill climbs" and "random walk of hill climbs".' },
+      { label: 'c', prompt: 'Tabu Search works directly in "discrete" spaces. What modifications would you need for a continuous (real-valued) space?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Tabu Search heuristic: "don\'t go back where you\'ve already been." Maintains a FIFO queue L (tabu list) of recently visited candidate solutions. When generating tweaks, candidates that appear in L are rejected — forced to move to new regions. This guarantees eventual escape from any local optimum.\n\nData structure: first-in, first-out (FIFO) queue of maximum length l. Oldest entries "fall off" when the list is full.\n\nTrade-off with l: large l → longer memory, less revisiting, but O(l) lookup time per candidate — expensive. Small l → faster lookup, but solutions "come back" from tabu sooner — less effective escape.' },
+      { label: 'b', answer: 'ILS heuristic: "better local optima can be found near the local optimum you\'re already in." Runs hill climbing repeatedly, but instead of random restarts, perturbs the current local optimum H and restarts from near it.\n\nNewHomeBase for "hill climb of hill climbs": H ← S only if Q(S) ≥ Q(H) — always move to a better or equal home base, never downhill. Conservative, exploitative.\n\nNewHomeBase for "random walk of hill climbs": H ← S always — adopt every new local optimum as home base. Exploratory.\n\nPerturb(H): generates a new start near H. "Big enough to escape the current basin, not too big to lose all proximity." Choosing this is called a "black art" — depends heavily on the problem space.' },
+      { label: 'c', answer: 'In continuous spaces, exact equality checks for tabu (is x in L?) are almost never satisfied — candidates are almost never exactly revisited.\n\nModifications:\n1. Define "sufficiently similar" (proximity threshold): reject candidate if it is within distance ε of any element in L.\n2. Tabu list of recent changes: instead of storing full candidates, store recent feature changes made to the solution. A candidate is tabu if it would undo a recent change.\n\nChallenges: defining the threshold ε is non-trivial; checking proximity can be expensive in high-dimensional spaces.' },
+    ],
+  },
+  {
+    id: 13,
+    topic: 'No Free Lunch Theorem',
+    source: 'Lecture 8',
+    time: '5–6 min',
+    parts: [
+      { label: 'a', prompt: 'State the No Free Lunch (NFL) Theorem (Wolpert & Macready, 1997) in your own words.' },
+      { label: 'b', prompt: 'What practical implications does the NFL theorem have for choosing an optimisation algorithm?' },
+      { label: 'c', prompt: 'Describe three types of "landscape" (fitness landscape) types from the course. For each, state which algorithm strategy is best suited.' },
+    ],
+    solution: [
+      { label: 'a', answer: '"Averaged across all possible problems, no algorithm outperforms any other."\n\nMore precisely: for any two algorithms A and B, when we sum their performance over all possible problem functions, both produce identical total performance. Any advantage algorithm A has over B on some class of problems is exactly cancelled by B\'s advantage on other problems. There is no universally best algorithm.' },
+      { label: 'b', answer: '1. No "silver bullet": cannot pick one algorithm and apply it everywhere — must choose based on problem knowledge.\n2. Domain knowledge matters: the best algorithm exploits specific structure of the target problem (e.g. continuity, modality, constraints).\n3. Benchmark carefully: performance on benchmark problems does not guarantee performance on your specific problem.\n4. Justify algorithm choice: "we chose SA because the space has many local optima and we can estimate the right temperature schedule" — not just "SA is good."' },
+      { label: 'c', answer: 'Unimodal landscape: single smooth peak. Best suited for: gradient descent / local hill climbing. One basin of attraction — no need for global search.\n\nNoisy/Rocky landscape: many local optima of similar height. Best suited for: simulated annealing, ILS with restarts, tabu search. Need to escape local optima frequently.\n\nDeceptive landscape: gradient points away from global optimum — easy to be lured to a bad local optimum. Best suited for: population-based methods (genetic algorithms), random restarts. Single-state methods are easily fooled.\n\n(Also: Needle in a Haystack — single narrow peak; extremely hard for any deterministic method. Random search may actually compete here.)' },
+    ],
+  },
+  {
+    id: 14,
+    topic: 'Job Shop Scheduling Problem',
+    source: 'Lecture 4',
+    time: '10–12 min',
+    parts: [
+      { label: 'a', prompt: 'Formally define the Job Shop Scheduling Problem (JSSP). What are the three key ingredients in terms of Language, Model, and Metric?' },
+      { label: 'b', prompt: 'Given the following 3×3 JSSP instance, calculate the makespan C_max for the schedule where operations are assigned in the order given (no preemption, satisfy all constraints):\n\nJ1: (M1,3) → (M2,3) → (M3,3)\nJ2: (M1,2) → (M3,3) → (M2,4)\nJ3: (M2,3) → (M1,2) → (M3,2)\n\nAssume the following priority ordering on each machine: M1: J1, J2, J3; M2: J1, J3, J2; M3: J2, J1, J3.' },
+      { label: 'c', prompt: 'What is the size of the hypothesis space for a JSSP with n=5 jobs and m=4 machines? Why is JSSP NP-hard?' },
+      { label: 'd', prompt: 'Describe the N1 neighbourhood (van Laarhoven) for local search on JSSP. Why does swapping on the critical path improve makespan?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'JSSP: n jobs, m machines. Each job has a fixed sequence of operations, each on a specific machine for a fixed duration. Machines can process one operation at a time; operations within a job must respect precedence order. Goal: assign start times to minimise makespan C_max = max_i C_i.\n\nLanguage (Representation): a permutation of operations on each machine; equivalently a Gantt chart or start-time matrix S = [s_ij]. Hypothesis space size ≤ (n!)^m.\n\nModel (Candidate Solution): one specific feasible schedule — an assignment of start times satisfying machine constraints (no overlap) and precedence constraints (operation order within each job).\n\nMetric: Makespan C_max = max_i C_i (latest completion time). Other metrics: total completion time Σ C_i, maximum lateness L_max, number of tardy jobs.' },
+      { label: 'b', answer: 'Processing each job in operation order, respecting machine availability and precedence:\n\nM1 sequence: J1(t=0–3), J2(t=3–5), J3(t=5–7)\nM2 sequence: J1 starts after J1 finishes M1 at t=3, so J1 on M2(t=3–6); J3 starts after J3 finishes M1 at t=7 → M2 free from t=6, so J3(t=7–10); J2 must wait for both M2 free (t=10) and J2 to finish M3 → check below.\nM3 sequence: J2 must finish M1(t=5), so J2 on M3(t=5–8); J1 must finish M2(t=6), so J1 on M3(t=8–11); J3 must finish M2(t=10) and M3 free(t=11) → J3(t=11–13).\nJ2 on M2: J2 finished M3 at t=8, M2 free at t=10, so J2 on M2(t=10–14).\n\nC_max = max(C_J1, C_J2, C_J3) = max(11, 14, 13) = 14.' },
+      { label: 'c', answer: 'Hypothesis space size: (n!)^m = (5!)^4 = 120^4 = 207,360,000 ≈ 2.07 × 10^8.\n\nNP-hardness: JSSP is NP-hard even for 2 machines and 3 jobs in some formulations. The solution space grows super-exponentially as (n!)^m. For even modest sizes (n=10, m=10: ≈3.63×10^65) exhaustive search is computationally infeasible. This motivates heuristic and metaheuristic approaches.' },
+      { label: 'd', answer: 'N1 neighbourhood (van Laarhoven):\n1. Identify the critical path — the longest path from start to finish that determines C_max.\n2. A move = swap two adjacent operations on the critical path that belong to different jobs on the same machine.\nN(s) = {s\' : s\' obtained by one adjacent critical-path swap}\n\nWhy this improves makespan: the critical path is the bottleneck determining C_max. Any reduction in C_max must shorten the critical path. Swapping adjacent operations on the critical path (on the same machine) is the minimal perturbation that can reduce the longest path length — it reorders the machine processing sequence locally without disrupting other constraints.' },
+    ],
+  },
+  {
+    id: 15,
+    topic: 'Dispatching Rules & JSP Heuristics',
+    source: 'Lecture 4',
+    time: '6–8 min',
+    parts: [
+      { label: 'a', prompt: 'List five dispatching rules for JSP. For each, give: the rule name, priority function (how it orders jobs), and a scenario where it is preferred.' },
+      { label: 'b', prompt: 'Define the RPD (Relative Percentage Deviation) metric used to compare JSP solutions to the best known solution (BKS). Why is this metric used instead of raw makespan?' },
+    ],
+    solution: [
+      { label: 'a', answer: '1. SPT (Shortest Processing Time): priority = p_i ascending. Best when minimising average completion time or throughput.\n\n2. LPT (Longest Processing Time): priority = p_i descending. Can reduce total weighted completion time in some settings.\n\n3. EDD (Earliest Due Date): priority = d_i ascending. Best when minimising maximum lateness or tardiness.\n\n4. FIFO (First In, First Out): priority = arrival order. Fair/simple; baseline when no other info available.\n\n5. CR (Critical Ratio): priority = (d_i − t) / p_i ascending. Balances urgency and remaining work; dynamic — recalculates as time progresses.\n\n6. MWKR (Most Work Remaining): priority = Σ remaining p_ik descending. Keeps machines busy with complex jobs.' },
+      { label: 'b', answer: 'RPD = (C_max^obtained − C_max^BKS) / C_max^BKS × 100%\n\nWhere C_max^BKS is the best known makespan for that benchmark instance.\n\nWhy RPD instead of raw makespan: different benchmark instances have different natural scales of makespan (a 6×6 instance will have a much smaller makespan than a 20×20 instance). RPD normalises performance to the best known solution, allowing fair comparison across different instances and algorithms. RPD = 0% means optimal (or ties with BKS); higher RPD = worse.' },
+    ],
+  },
+  {
+    id: 16,
+    topic: 'Partial Derivatives & Gradient Vector',
+    source: 'Lecture 5',
+    time: '8–10 min',
+    parts: [
+      { label: 'a', prompt: 'Define a partial derivative. Compute ∂f/∂x₁ and ∂f/∂x₂ for f(x₁, x₂) = x₁³ + 2x₁x₂ + x₂².' },
+      { label: 'b', prompt: 'Write the general definition of the gradient ∇f for f : ℝⁿ → ℝ as a column vector. Compute ∇f at the point (1, 2) for f from part (a).' },
+      { label: 'c', prompt: 'In the gradient ascent/descent algorithm, why does moving in the direction of +∇f maximise the function? In what direction should you move to minimise?' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Partial derivative: derivative of a multivariable function with respect to one variable, treating all other variables as constants.\n\nFor f(x₁, x₂) = x₁³ + 2x₁x₂ + x₂²:\n∂f/∂x₁ = 3x₁² + 2x₂ (differentiate w.r.t. x₁, hold x₂ constant)\n∂f/∂x₂ = 2x₁ + 2x₂ (differentiate w.r.t. x₂, hold x₁ constant)' },
+      { label: 'b', answer: '∇f(x) = [∂f/∂x₁, ∂f/∂x₂, ..., ∂f/∂xₙ]ᵀ (column vector of all partial derivatives)\n\nAt (x₁, x₂) = (1, 2):\n∂f/∂x₁ = 3(1)² + 2(2) = 3 + 4 = 7\n∂f/∂x₂ = 2(1) + 2(2) = 2 + 4 = 6\n\n∇f(1,2) = [7, 6]ᵀ' },
+      { label: 'c', answer: 'The gradient ∇f at any point is a vector that points in the direction of steepest ascent — the direction in which f increases most rapidly. This follows from the definition: the gradient is constructed from the partial derivatives, each measuring rate of change in one coordinate direction; the vector sum points in the overall steepest direction.\n\nTo maximise: move in direction +∇f (gradient ascent): x⃗ ← x⃗ + α∇f(x⃗)\nTo minimise: move in direction −∇f (gradient descent): x⃗ ← x⃗ − α∇f(x⃗)' },
+    ],
+  },
+  {
+    id: 17,
+    topic: 'Smoothness Classes & Algorithm Applicability',
+    source: 'Lectures 6–7',
+    time: '6–8 min',
+    parts: [
+      { label: 'a', prompt: 'Define the smoothness classes C⁰, C¹, C², C∞. For each optimisation algorithm below, state the minimum smoothness class required: (i) gradient descent, (ii) Newton-Raphson, (iii) Nelder-Mead simplex, (iv) hill climbing.' },
+      { label: 'b', prompt: 'A colleague proposes using gradient descent on the JSSP. Explain why this is not directly applicable, and suggest two better alternatives with justification.' },
+    ],
+    solution: [
+      { label: 'a', answer: 'C⁰: continuous functions (no breaks/jumps)\nC¹: continuously differentiable (smooth, first derivative exists and is continuous)\nC²: twice differentiable (second derivative exists and is continuous)\nC∞: infinitely differentiable (all derivatives exist)\n\nMinimum class required:\n(i) Gradient descent: C¹ — needs f\'(x) or ∇f(x) to exist and be continuous.\n(ii) Newton-Raphson: C² — needs f\'(x) and f\'\'(x) to exist and be continuous.\n(iii) Nelder-Mead simplex: C⁰ — only evaluates f(x), no derivatives needed. Works on any evaluable function.\n(iv) Hill climbing: C⁰ (or even discontinuous) — only evaluates Quality(S), no derivative.' },
+      { label: 'b', answer: 'Gradient descent is not applicable to JSSP because:\n1. JSSP solution space is discrete/combinatorial (permutations of operations) — there is no notion of a gradient in a discrete space. Derivatives are undefined.\n2. The objective function (makespan) is not continuous — small changes in operation order can cause step changes in makespan.\n\nBetter alternatives:\n1. Hill climbing with grammar-aware Tweak: e.g. swap adjacent operations on a machine. No derivative needed — only evaluates makespan. Natural fit for combinatorial spaces.\n2. Simulated Annealing: same tweak operation, but accepts worse solutions probabilistically, allowing escape from local optima. Well-established for JSSP with the N1 neighbourhood.' },
+    ],
+  },
+  {
+    id: 18,
+    topic: 'Putting It All Together: Algorithm Design',
+    source: 'Lectures 3–9',
+    time: '12–15 min',
+    parts: [
+      { label: 'a', prompt: 'You are asked to optimise a robot arm controller with 12 continuous joint angles. The objective is to minimise a smooth convex energy function. Which algorithm is most appropriate? Justify using the three key ingredients and the smoothness class of the space.' },
+      { label: 'b', prompt: 'Now the energy function is changed to a non-differentiable, multimodal function with many local optima. Redesign your approach. Which algorithm(s) would you choose and why?' },
+      { label: 'c', prompt: 'Explain what hyper-parameters are and why they are important. Give four specific examples of hyper-parameters from different algorithms in this course, and describe the trade-off each one makes.' },
+    ],
+    solution: [
+      { label: 'a', answer: 'Language: 12-dimensional real-valued vector (joint angles). Hypothesis space: ℝ¹² (or bounded subset). Model: one specific joint configuration [θ₁, ..., θ₁₂]. Metric: smooth convex energy function — C² (twice differentiable), single global minimum.\n\nBest algorithm: Newton-Raphson (or gradient descent). Because: (1) function is C² — second derivatives available; (2) convex → single global optimum, gradient methods guaranteed to converge; (3) N-R uses curvature to auto-scale steps → very efficient convergence. No need for stochastic methods since there is only one optimum.' },
+      { label: 'b', answer: 'Problem: non-differentiable → gradient methods inapplicable. Multimodal → single-state methods may get trapped.\n\nRecommended approach:\n1. Primary: Simulated Annealing with Gaussian tweak. SA handles non-differentiable spaces (only evaluates f), and the temperature schedule allows escape from local optima. Gaussian tweak provides a natural locality heuristic.\n2. Alternative: ILS with hill climbing restarts. Each restart finds a local optimum; home-base mechanism guides restarts toward promising regions.\n3. Consider also: Nelder-Mead simplex (no derivatives, population of candidates, shape-changing exploration) — effective if function is at least evaluable.\n\nAlgorithm choice informed by: non-differentiable → no gradient methods; multimodal → need exploration mechanism (SA temperature or restarts); continuous space → tabu search less natural.' },
+      { label: 'c', answer: 'Hyper-parameters: parameters that operate "above" or "outside" the model — they control the algorithm\'s behaviour, not the solution being optimised.\n\nFour examples:\n\n1. α (learning rate) in gradient descent: x ← x − α f\'(x). Trade-off: small α → slow convergence (safe but slow); large α → fast but risks overshoot/oscillation. Must be tuned to the problem\'s curvature.\n\n2. σ (standard deviation) in Gaussian convolution: n ~ N(0,σ²). Trade-off: large σ → more exploration (can jump to better peaks); small σ → exploitation (converges locally). Direct "exploration knob."\n\n3. n (sample count) in Steepest Ascent HC: evaluates n tweaks per step. Trade-off: large n → better estimate of steepest direction (like gradient) but n× more evaluations per step. A computational budget trade-off.\n\n4. t (temperature) in Simulated Annealing and its cooling rate α. Trade-off: high t → exploration (accepts worse solutions freely); low t → exploitation. Cooling rate controls how quickly this shifts — too fast → gets stuck; too slow → wastes compute on exploration.' },
+    ],
+  },
+];
+
+// ── Practice Exam Tab ─────────────────────────────────────────────────────────
+function PracticeExamTab() {
+  const [open, setOpen] = useState({});
+  const toggleSolution = (id) => setOpen(prev => ({ ...prev, [id]: !prev[id] }));
+
+  return (
+    <div>
+      <div className="m4-infobox" style={{ marginBottom: '1.5rem' }}>
+        <strong>How to use:</strong> Read each question and write your answer on paper or in a text editor — then click <strong>Show Solution</strong> to compare. Estimated times are per question; total ≈ 2.5–3 hrs for all 18 questions (full exam simulation).
+      </div>
+
+      {PRACTICE_QUESTIONS.map((q) => (
+        <div key={q.id} className="m4-card" style={{ marginBottom: '1.25rem', borderLeft: '3px solid var(--cyan)' }}>
+          {/* Question header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <div>
+              <span className="m4-badge" style={{ marginRight: '0.5rem', background: 'rgba(34,211,238,0.12)', color: 'var(--cyan)', border: '1px solid rgba(34,211,238,0.3)' }}>
+                Q{q.id}
+              </span>
+              <span className="m4-card-h" style={{ display: 'inline', fontSize: '1rem' }}>{q.topic}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <span className="m4-badge" style={{ background: 'rgba(148,163,184,0.1)', color: 'var(--text-2)', border: '1px solid rgba(148,163,184,0.2)', fontSize: '0.72rem' }}>
+                {q.source}
+              </span>
+              <span className="m4-badge" style={{ background: 'rgba(251,191,36,0.12)', color: 'var(--amber)', border: '1px solid rgba(251,191,36,0.25)', fontSize: '0.72rem' }}>
+                {'\u23f1'} {q.time}
+              </span>
+            </div>
+          </div>
+
+          {/* Question parts */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {q.parts.map((part) => (
+              <div key={part.label} style={{ background: 'rgba(15,23,42,0.45)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
+                <span style={{ color: 'var(--cyan)', fontWeight: 700, marginRight: '0.5rem', fontFamily: 'monospace' }}>({part.label})</span>
+                <span style={{ color: 'var(--text-1)', fontSize: '0.88rem', lineHeight: 1.6 }}>{part.prompt}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Solution toggle */}
+          <div style={{ marginTop: '1rem' }}>
+            <button
+              onClick={() => toggleSolution(q.id)}
+              style={{
+                background: open[q.id] ? 'rgba(34,211,238,0.15)' : 'rgba(34,211,238,0.07)',
+                border: '1px solid rgba(34,211,238,0.3)',
+                color: 'var(--cyan)',
+                borderRadius: '0.4rem',
+                padding: '0.4rem 1rem',
+                cursor: 'pointer',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                transition: 'background 0.15s',
+              }}
+            >
+              {open[q.id] ? '\u25b2 Hide Solution' : '\u25bc Show Solution'}
+            </button>
+
+            {open[q.id] && (
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {q.solution.map((sol) => (
+                  <div key={sol.label} style={{ background: 'rgba(52,211,153,0.07)', border: '1px solid rgba(52,211,153,0.2)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
+                    <div style={{ marginBottom: '0.35rem' }}>
+                      <span style={{ color: 'var(--emerald)', fontWeight: 700, fontFamily: 'monospace', marginRight: '0.5rem' }}>({sol.label})</span>
+                      <span style={{ color: 'var(--emerald)', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Solution</span>
+                    </div>
+                    <pre style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      fontSize: '0.82rem',
+                      color: 'var(--text-1)',
+                      fontFamily: 'inherit',
+                      lineHeight: 1.65,
+                    }}>
+                      {sol.answer}
+                    </pre>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
-const MAIN_TABS = ['Overview','Intelligence','Adaptation','Job Shop','Optimisation','Calculus','Algorithms','Labs','Quiz'];
+const MAIN_TABS = ['Overview','Intelligence','Adaptation','Job Shop','Optimisation','Calculus','Algorithms','Labs','Quiz','Practice Exam'];
 const LAB_TABS  = ['PRNG & LCG','Bin Packing','Job Shop (JSSP)','Solution Space'];
 
 export default function CITS4012() {
@@ -2105,6 +2826,15 @@ export default function CITS4012() {
             <p className="m4-sec-sub">Covering all lectures: LCG, Bin Packing, JSSP, Optimisation Framework, Calculus & Gradients, Algorithms. Detailed feedback on every answer.</p>
           </div>
           <QuizSection />
+        </>)}
+
+        {/* ── PRACTICE EXAM ── */}
+        {tab === 'Practice Exam' && (<>
+          <div className="m4-sec-hdr">
+            <h2 className="m4-sec-title">Practice Exam <span className="m4-badge" style={{background:'rgba(34,211,238,0.12)',color:'var(--cyan)',border:'1px solid rgba(34,211,238,0.3)'}}>18 Questions</span></h2>
+            <p className="m4-sec-sub">Full exam-style questions covering every topic. Write your answer before revealing the solution. Includes 3 questions from the 2026 practice exam and 15 questions derived from lecture content.</p>
+          </div>
+          <PracticeExamTab />
         </>)}
 
       </main>
