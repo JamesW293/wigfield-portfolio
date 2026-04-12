@@ -46,6 +46,7 @@ const CYBER_COLS = [
 // ── Quiz Data (10 questions covering all lectures) ────────────────────────────
 const QUIZ_DATA = [
   {
+    lec: 'Lec 8 · Stochastic Optimisation',
     q: 'Given an LCG with seed X₀=1, multiplier a=3, increment c=1, modulus m=7 — what is X₁?',
     opts: ['X₁ = 3', 'X₁ = 4', 'X₁ = 7', 'X₁ = 1'],
     ans: 1,
@@ -53,6 +54,7 @@ const QUIZ_DATA = [
     ng: 'Formula: Xₙ₊₁ = (a·Xₙ + c) mod m. So X₁ = (3×1+1) mod 7 = 4. Multiply first, add increment, then modulo.',
   },
   {
+    lec: 'Lec 8 · Stochastic Optimisation',
     q: 'FFD is "offline" while FF is "online". What is the key difference?',
     opts: [
       'FFD requires more memory',
@@ -65,6 +67,7 @@ const QUIZ_DATA = [
     ng: 'Key distinction is when sizes are known. FFD must see every item first (offline). Online algorithms place items immediately — perfect for the conveyor belt.',
   },
   {
+    lec: 'Lec 4 · Job Shop Problem',
     q: 'For JSSP with n=4 jobs and m=3 machines, what is the solution space size (n!)ᵐ?',
     opts: ['64  (4³)', '13,824  ((4!)³)', '1,728  (12³)', '24  (4!)'],
     ans: 1,
@@ -72,6 +75,7 @@ const QUIZ_DATA = [
     ng: 'Solution space = (n!)ᵐ. With n=4, m=3: (4!)³ = 24³ = 13,824.',
   },
   {
+    lec: 'Lec 3 · Optimisation Framework',
     q: 'In optimisation, what does the metric (evaluation function) f : H → ℝ measure?',
     opts: [
       'The size of the hypothesis space H',
@@ -84,6 +88,7 @@ const QUIZ_DATA = [
     ng: 'f : H → ℝ maps a candidate solution (hypothesis) to a real number indicating how good it is. The argmin of f gives the best hypothesis.',
   },
   {
+    lec: 'Lec 5 · Vector Calculus',
     q: 'What does the derivative f\'(x) = 0 tell us, and how do we confirm it is a minimum (not a maximum)?',
     opts: [
       'f\'(x) = 0 always means a minimum; no further check needed',
@@ -96,6 +101,7 @@ const QUIZ_DATA = [
     ng: 'f\'(x) = 0 gives critical points. Check f\'\'(x): positive → concave up → local min; negative → concave down → local max.',
   },
   {
+    lec: 'Lec 5 · Vector Calculus',
     q: 'The gradient ∇f(x) of a scalar function f : ℝⁿ → ℝ is best described as:',
     opts: [
       'The second derivative of f with respect to all variables',
@@ -108,6 +114,7 @@ const QUIZ_DATA = [
     ng: 'The gradient is a vector of partial derivatives. Gradient descent moves opposite to ∇f (down the steepest slope); ascent moves along ∇f.',
   },
   {
+    lec: 'Lec 6 · Gradient Methods',
     q: 'In gradient descent, the update rule is x ← x − α f\'(x). What role does α (the learning rate) play?',
     opts: [
       'It sets the stopping threshold for convergence',
@@ -120,6 +127,7 @@ const QUIZ_DATA = [
     ng: 'α scales step size. x ← x − α f\'(x): sign of f\'(x) gives direction, magnitude gives size, α scales it. Too large causes oscillation; too small is inefficient.',
   },
   {
+    lec: 'Lec 7 · Direct Methods',
     q: 'Newton-Raphson for optimisation uses the update x ← x − f\'(x)/f\'\'(x). Why is this faster than plain gradient descent?',
     opts: [
       'It uses randomness to escape local minima',
@@ -132,6 +140,7 @@ const QUIZ_DATA = [
     ng: 'N-R divides by f\'\'(x) — the curvature. This effectively matches the step to local geometry (like approximating with a quadratic), much faster than fixed-α gradient descent.',
   },
   {
+    lec: 'Lec 9 · Single-State Global Optimisation',
     q: 'In Simulated Annealing, the acceptance probability for a worse solution R (where Quality(R) < Quality(S)) is:',
     opts: [
       'Always 0 — worse solutions are never accepted',
@@ -144,6 +153,7 @@ const QUIZ_DATA = [
     ng: 'SA uses P = e^((Q(R)−Q(S))/t). With Q(R) < Q(S), the exponent is negative so 0 < P < 1. High temperature t → high P (exploration). Low t → low P (exploitation).',
   },
   {
+    lec: 'Lec 8 · Stochastic Optimisation',
     q: 'The No Free Lunch theorem (Wolpert & Macready, 1997) states that:',
     opts: [
       'Gradient descent always outperforms random search',
@@ -1125,7 +1135,21 @@ function QuizSection() {
         return(
           <div key={qi} className="m4-qcard">
             <div className="m4-qhead">
-              <div className="m4-qnum">Question {qi+1} / {total}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                <div className="m4-qnum" style={{ margin: 0 }}>Question {qi+1} / {total}</div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  color: 'var(--violet)',
+                  background: 'rgba(167,139,250,0.12)',
+                  border: '1px solid rgba(167,139,250,0.3)',
+                  borderRadius: '0.3rem',
+                  padding: '0.1rem 0.45rem',
+                  fontFamily: 'monospace',
+                  whiteSpace: 'nowrap',
+                }}>{q.lec}</span>
+              </div>
               <div className="m4-qtext">{q.q}</div>
             </div>
             <div className="m4-qopts">
