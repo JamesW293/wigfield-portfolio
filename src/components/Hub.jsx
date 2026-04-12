@@ -25,8 +25,8 @@ const MODULES = [
     tag: 'ACTIVE',
   },
   {
-    id: 'cits4012',
-    code: 'CITS4012',
+    id: 'cits4404',
+    code: 'CITS4404',
     title: 'AI & Adaptive Systems',
     description: 'Intelligent agents · NLP · adaptive algorithms · evolutionary computation · reinforcement learning.',
     gif: cyberBar,

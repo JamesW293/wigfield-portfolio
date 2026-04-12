@@ -9,8 +9,8 @@ const MODULE_META = {
     color: 'cyan',
     semester: 'Sem 2, 2025',
   },
-  cits4012: {
-    code: 'CITS4012',
+  cits4404: {
+    code: 'CITS4404',
     title: 'AI & Adaptive Systems',
     color: 'violet',
     semester: 'Sem 1, 2025',

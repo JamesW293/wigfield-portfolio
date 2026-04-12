@@ -2667,13 +2667,13 @@ function PracticeExamTab() {
 const MAIN_TABS = ['Overview','Intelligence','Adaptation','Job Shop','Optimisation','Calculus','Algorithms','Labs','Quiz','Practice Exam'];
 const LAB_TABS  = ['PRNG & LCG','Bin Packing','Job Shop (JSSP)','Solution Space'];
 
-export default function CITS4012() {
+export default function CITS4404() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('Overview');
   const [labTab, setLabTab] = useState('PRNG & LCG');
 
   useEffect(() => {
-    document.title = 'CITS4012 — Learning Hub';
+    document.title = 'CITS4404 — Learning Hub';
     return () => { document.title = 'James Wigfield'; };
   }, []);
 
@@ -2684,7 +2684,7 @@ export default function CITS4012() {
           <div className="m4-header-top">
             <button className="umod__back" onClick={() => navigate('/hub')}>← Hub</button>
             <div className="m4-htitle">
-              <span className="m4-hcode">CITS4012</span>
+              <span className="m4-hcode">CITS4404</span>
               <span className="m4-hname">AI &amp; Adaptive Systems</span>
             </div>
           </div>
@@ -2702,7 +2702,7 @@ export default function CITS4012() {
         {tab === 'Overview' && (
           <div>
             <div className="m4-hero">
-              <div className="m4-hero-lbl">// CITS4012 · UWA · Sem 1, 2025</div>
+              <div className="m4-hero-lbl">// CITS4404 · UWA · Sem 1, 2025</div>
               <h1 className="m4-hero-title"><span style={{color:'var(--cyan)'}}>AI</span> &amp; Adaptive Systems</h1>
               <p className="m4-hero-sub">Nature-inspired computing. From the definition of intelligence to calculus, gradient descent, and stochastic optimisation — building the full picture of how adaptive systems work.</p>
             </div>

@@ -9,7 +9,7 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Hub from './components/Hub';
 import UniversityModule from './components/UniversityModule';
-import CITS4012 from './components/modules/CITS4012';
+import CITS4404 from './components/modules/CITS4404';
 import Honours from './components/modules/HONOURS';
 
 function Portfolio() {
@@ -34,7 +34,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Portfolio />} />
       <Route path="/hub" element={<Hub />} />
-      <Route path="/hub/cits4012" element={<CITS4012 />} />
+      <Route path="/hub/cits4404" element={<CITS4404 />} />
       <Route path="/hub/honours" element={<Honours />} />
       <Route path="/hub/:moduleId" element={<UniversityModule />} />
     </Routes>
